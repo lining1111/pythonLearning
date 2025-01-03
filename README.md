@@ -46,10 +46,17 @@ yolov5下载---准备数据集---python训练train.py---测试detect.py---导出
     数据---工程化手段---数据‘
 所以手段一般不要太复杂化，尽量的用通俗的、易于理解的方式进行组织，达到能够稳定且正确的将数据进行转换即可
 
+### docker
+
 docker 安装方式参考 https://blog.csdn.net/Stromboli/article/details/142486565
     镜像地址 https://1ms.run/
     官方文档地址 https://docs.docker.com/manuals/
+    docker是将单体应用进行容器化的工具，主要是3部分，CLI、Dockerfile、Docker compose。 其中：
+    Dockerfile是用文件(脚本文件)的形式，将一个原始开源的基础镜像，改造成包含自己编写的应用的镜像。
+    Docker compose 是用文件的形式(yaml文件)替代长串的docker镜像启动成容器的命令行
+    经过Dockerfile和Docker compose后，会在系统中有容器存在，后面就可以对容器进行启动、停止、删除等操作。
 
+#### Dockerfile
     可以用docker的方式将单一容器内的服务进行组织，编写成一个自己的镜像
     1、用Dockerfile，拉取单个基础镜像如 ubuntu (一般ubuntu的默认apt源是国外的，需要将本地的apt源替换掉镜像的： COPY /etc/apt/sources.list /etc/apt )
     2、将本地的应用程序拷贝到基础镜像内
@@ -66,6 +73,7 @@ docker 安装方式参考 https://blog.csdn.net/Stromboli/article/details/142486
     VOLUME ["/app/log/"]
     CMD ["executable","param1","param2"]
 
+#### docker compose
     docker compose 可以运行多个容器。默认是compose.yml，语法也比较简单，可以参考 https://www.cnblogs.com/minseo/p/11548177.html
     官方文档地址 https://docs.docker.com/reference/compose-file/
     顶级元素有：
@@ -112,8 +120,30 @@ docker 安装方式参考 https://blog.csdn.net/Stromboli/article/details/142486
         driver: bridge
 
     
+### k8s
+k8s的集群架构
+![k8s](images/k8s.png)
+从上图可以看出，k8s集群包含两部分，主控节点Master和工作节点Node
 
+#### 主控节点Master
+主要有的组件是
+**APIserver**
+    集群的统一入口，以restful方式，交给etcd存储
+**scheduler**
+    节点调度，选择node节点，进行应用部署
+**controller-manager**
+    处理集群中常规的后台任务，一个资源对应一个控制器
+**etcd**
+    存储系统，用于保存集群相关的数据
 
+#### 工作节点Node
+主要有的组件是
+**docker**
+    容器化工具
+**kubelet**
+    主控节点派到工作节点的代表，管理本机容器
+**kube-proxy**
+    提供网络代理，负载均衡等操作
 
 
 
