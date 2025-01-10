@@ -25,6 +25,8 @@
 ---
 ![分布式系统](images/分布式系统.png)
 
+**本文中服务和应用是等同了，都是代表容器中运行的业务进程**
+
     学习docker和k8s分布式系统管理工具，能够更好的理解现代互联网大型系统的结构，从大处见真知。
     常用端口(单体应用在对外提供服务端口的时候，应该尽量避开这些常用的系统端口，以保证应用在系统中的适应性,一般至少是10000以上)
     服务名称                端口号     说明
@@ -185,6 +187,7 @@
     要体会的要义多，但是和docker一样，要先理解这个是干什么的，有着怎么样的架构，微服务组件间是怎么通信工作的就好了。
     其实k8s更好的体现了，在大型的高可用系统中，从单一微服务用容器的方式实现(增加微服务的系统环境适应力)到各个微服务间的组合形成更大型的服务。
     可以体会到，容器化的微服务群，有助于系统功能的解耦、迁移。只要保证好各个微服务版本间的兼容就好了。
+
 #### 2.1、搭建k8s集群
     k8s集群包含两部分，主控节点Master和工作节点Node
 ---
@@ -248,6 +251,7 @@
         ],
         "exec-opts": ["native.cgroupdriver=systemd"]
     }
+    上面文件的作用有两个，一个是设置镜像拉取地址(docker hub 被墙了)；一个是设置docker的cgroup为systemd，防止后面k8s主节点初始化有问题
     其中下面的那个地址为自己的aliyun的镜像加速地址，可以替换成自己的
     sudo systemctl daemon-reload
     sudo systemctl restart docker
@@ -307,6 +311,12 @@
     kubeadm join 192.168.127.250:6443 --token qwfasm.n7hx820fmlu1cqnw \
         --discovery-token-ca-cert-hash sha256:9d7c74156cbfeee22bfd402a115ba3bb3ce82bd9d73e382f32414296d03bcf60
 
+    如果忘记上面的，可以再master上执行
+    kubeadm token create 没有加参数时，可以通过下面的命令查看加入要写的参数值
+    kubeadm token list 查看token，得到值后，输入
+    openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+    
+
 ##### 2.1.6、master部署 CNI
     **无论哪个都是要和k8s的版本做适应的，推荐使用calico**
 
@@ -317,6 +327,10 @@
     calico和k8s版本也有对应的关系 具体可以在https://github.com/projectcalico/calico/releases 一个一个查看说明
     k8s-1.18.0(calico-3.14.2)
     k8s-1.23.6(calico-3.25.0)
+    
+    这里有个小知识，一个整个的yaml其实很庞大，
+    一般就需要注意两个方面，一个是apiVersion，一个是image。可以使用命令
+    grep xxx yyy.yaml 来过滤信息查看
 
     kubectl get nodes
 
@@ -324,10 +338,9 @@
     在master上执行
     kubectl create deployment nginx --image=nginx
     kubectl expose deployment nginx --port=80 --type=NodePort
-    kubectl get pod,svc
-    
-    kubectl get pod -o wide (以后尽量加 -o wide可以看到运行的节点)
-    可以看到是运行在哪个节点，这点可以看运行的端口是哪个，然后在浏览器输入任意的node的ip加上这个端口就可以打开nginx
+    kubectl get pod,svc -o wide (以后尽量加 -o wide可以看到运行的节点)
+
+    此时就可以在master和node的任意的ip 加上容器内80映射到节点的端口号来访问nginx了    
     
     测试完毕，删除 nginx
     kubectl delete deployment nginx
@@ -342,6 +355,9 @@
     
     在k8s和docker安装完毕后，从4步开始 所有操作有问题后，都有一个类型重启k8s环境的操作
     sudo kubeadm reset -f
+
+    如果想在node节点执行kubectl的命令，由于api-server是运行在master节点上的，所以需要让node节点知道这个命令是向谁请求
+    
 
 #### 2.2、k8s中各个组件
     理解组件可以从k8s的结构和微服务组合角度来看
@@ -366,18 +382,22 @@
 ![k8s](images/k8s.png)
 
 #### 2.3、k8s命令行工具 kubectl
-    语法格式
 
+---
+    https://kubernetes.io/zh-cn/docs/reference/kubectl/
+    弃用api的说明 https://kubernetes.io/zh-cn/docs/reference/using-api/deprecation-guide/
+
+    语法格式
     kubectl [command] [TYPE] [NAME] [flags]
 
-    command:对资源进行的操作，create get describe delete
-    TYPE:资源类型 大小写敏感，pod pods
+    command:对资源进行的操作
+    TYPE:资源类型 大小写敏感
     NAME:资源名称 大小写敏感，
-    flags:可选参数 大小写敏感，-s 
+    flags:可选参数 大小写敏感
 
-    与kubectl命令行工具相对的，有一些web类型的可视化界面(注意k8s版本适配)，如
+    **与kubectl命令行工具相对的，有一些web类型的可视化界面(注意k8s版本适配)**，如
     Dashboard(https://github.com/kubernetes/dashboard)
-    kuBoard(https://www.kuboard.cn/)、
+    kuBoard(https://www.kuboard.cn/)
 
     kubectl 是通过yaml文件形成http请求，向restful api风格接口的ApiServer发送请求
     (apiVersion 可以通过 kubectl api-versions查询，kind 可以通过 kubectl api-resources查询)
@@ -385,6 +405,10 @@
     helm是k8s的包管理器
 
 ##### 2.3.1、资源管理和编排部署的文件(yaml)
+
+    **一个yaml文件是存在master上的，是一个部署相关的资源清单，
+    可以在ide中通过ssh和sftp的功能拉到本地编辑再同步到服务器
+    同时在ide中添加k8s的插件，方便文件编写**
     其实k8s的资源和对象，可以理解为编程语言中的类和对象，
     类比 k8s和go
     k8s         go
@@ -404,7 +428,7 @@
     
     yaml语法格式，2空格表示缩进关系的；冒号或者逗号加1个空格；#表示注释；---表示一个新的文件开始
     
-    一般编排文件的组成部分：
+    **一般编排文件的组成部分(再2.5 2.6章节有具体的说明，在练习中学习)**：
     以template为分割的
     
     ---控制器定义
@@ -458,6 +482,7 @@ helm search repo xxx (xxx为包名)
     图示创建Pod的过程
 ![createPod](images/createPod.png)
 
+    Pod是所有资源清单中Kind的元类
 ##### 2.5.1、关于Pod
     1、基本概念：
     最小的部署单元；Pod里面是一组容器的组合；一个Pod中的容器共享网络命名空间；pod是短暂存在的
@@ -511,102 +536,141 @@ helm search repo xxx (xxx为包名)
     创建时调度策略，可以用的时候现查，(随着使用的熟练后，这块就熟能生巧了)
 
 #### 2.6、Controller
-包括  
-Deployment 部署无状态应用，控制pod升级，回退
-ReplicaSet 副本集，控制 pod 扩容，裁减
-StatefulSet 部署有状态应用，结合Service、存储等实现对有状态应用部署
-DaemonSet 守护进程集，运行在所有集群节点(包括master), 比如使用filebeat,node_exporter
-Job 一次性
-Cronjob 周期性
+    以运维常做的工作特点看，服务有以下的分类特点
+    ---1、无状态服务：认为Pod都是相同的，没有顺序要求，不用考虑在哪个node上运行，随意进行伸缩和扩展
+    ---2、有状态服务：Pod是不一样的，有顺序要求，考虑在哪个node上运行，不可随意伸缩扩展；每个Pod独立，保持Pod的启动顺序和唯一性
+    ---3、守护进程:DaemonSet
+    ---4、任务:一次性任务Job、定时任务CronJob
+
+    根据要控制的服务的特点,分为四大类:适用无状态服务、适用有状态服务、守护进程、任务/定时任务
+    包括:
+    无状态服务
+    ReplicationController(RC) （从1.11后就废除了）控制Pod扩容/缩容
+    ReplicaSet(RS) (基于label和selector的机制，替代了RC的绑定，淘汰了RC，也不常用)控制Pod扩容/缩容
+    Deployment (**最常用的**，对RS再次升级)提供更丰富的部署，控制Pod扩容、缩容、滚动升级/回退
+    
+    有状态服务
+    StatefulSet 部署有状态应用，结合Service、存储等实现对有状态应用部署
+    守护进程
+    DaemonSet 守护进程集，运行在所有集群节点(包括master), 比如使用filebeat,node_exporter
+    任务/定时任务
+    Job 一次性
+    Cronjob 周期性
+---
+**下面的分节，是对常用控制器的元素的说明，包括说明、常用创建命令、元素说明**
+视频学习可以参考 叩丁狼的B站视频 https://www.bilibili.com/video/BV1MT411x7GH 
+通过kubectl api-resources 得到的APIVERSION KIND的信息分类
+k8s用的程序的深浅就是在下面这些资源类型的使用程序
+在 https://kubernetes.io/zh-cn/docs/concepts/ 下
+它们分为 7类，必须掌握的是控制器、服务、存储、配置(涉及了服务的生命周期管理、对外服务暴露、数据存放、配置相关，都是紧紧要的)。
+其他的慢慢来，其实后面的多多少少不是独立存在的，需要嵌套写入到前面4项中。
+1、控制器 Deployment、StatefulSet、DaemonSet、Job、CronJob
+2、服务 Service、Ingress
+3、存储 Volume Pod
+4、配置 ConfigMap、Secret、探针
+5、安全 ServiceAccount RBAC(基于角色的访问控制)
+6、策略 LimitRange 
+7、调度 Pod Label/Selector 污点/亲和性
 
 ##### 2.6.1、Deployment
 
-Deployment用来管理Pod和Pod的副本数量
+---
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/deployment/
+    **说明**
+        最常用的部署无状态服务的控制器
+        通过label和selector标签来建立Pod和Controller的关联关系
+        部署、暂停/恢复、扩容/缩容、滚动升级/回归等
+        应用场景 web服务 微服务
+    **常用创建命令**
+        kubectl create deployment 
+        创建了模板后，进行修改
+    **元素说明**
+        
 
-在集群上管理和运行容器的对象
-通过label和selector标签来建立Pod和Controller的关联关系，Pod通过Controller来实现应用的运维(伸缩、滚动升级)
-deployment应用场景：部署无状态应用，管理Pod和ReplicaSet，部署 滚动升级等，应用场景 web服务 微服务
+##### 2.6.2、StatefulSet
 
-无状态应用：认为Pod都是相同的，没有顺序要求，不用考虑在哪个node上运行，随意进行伸缩和扩展
-有状态应用：Pod是不一样的，有顺序要求，考虑在哪个node上运行，不可随意伸缩扩展；每个Pod独立，保持Pod的启动顺序和唯一性
-部署守护进程DaemonSet
-一次性任务Job、定时任务CronJob
+---
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/statefulset/
+    **说明**
+        部署有状态应用，部署、暂停/恢复、扩容/缩容、滚动升级/回归等
+        Headless Service DNS管理(网络)
+        volumeClaimTemplates 持久化卷(存储)
+    **常用创建命令**
+        暂无
+    **元素说明**
+        
 
+##### 2.6.3、DaemonSet
 
-kubectl create deployment 
-kubectl apply
-kubectl expose deployment xxx --port= --type=NodePort --target-port= (实际是建立一个Service)
-**上面的的NodePort的Service容易出现暴露到外面的端口老变的问题，可以使用yaml文件进行固定**
-例子如下
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-service
-spec:
-  type: NodePort
-  ports:
-    - port: 80
-      targetPort: 80
-      nodePort: 30007  # 指定一个固定的NodePort
-  selector:
-    app: nginx
+---
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/
+    **说明**
+    守护进程，比如通过标签来进行节点调度
+    **常用创建命令**
+    **元素说明**
 
-k8s 用命令行进行操作
-升级 kubectl set image deployment xxx iii=iii:version (xxx 为deployment名 iii为镜像名 version为版本)
-查看升级状态 kubectl rollout status deployment xxx
-查看升级的版本 kubectl rollout history deployment xxx
-回滚到上一个版本 kubectl rollout undo deployment xxx
-回滚到指定版本 kubectl rollout undo deployment xxx --to-revision= 
-弹性伸缩 kubectl scale deployment xxx --replicas= 
+##### 2.6.4、Job
 
-##### 2.6.2、Service
-存在的意义：
-方式Pod失联(服务发现)、定义一组Pod的访问规则(负载均衡)
+---
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/job/
+    **说明**
+    一次性任务
+    **常用创建命令**
+    **元素说明**
 
-根据label和selector标签建立Pod和Service的关联关系
+##### 2.6.5、CronJob
 
-常用类型(kubectl expose --help) 
---type=  ClusterIP, NodePort, LoadBalancer
-ClusterIP 集群内部访问
-NodePort 对外访问应用
-LoadBalancer 对外访问应用，公有云
+---
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/cron-jobs/
+    **说明**
+    周期性任务
+    **常用创建命令**
+    **元素说明**
 
-##### 2.6.3、Secret 不常用
-加密数据存到etcd中，让Pod容器以 **环境变量形式** 或者 **挂载Volume方式** 进行访问
-场景：凭据 
+##### 2.6.6、Service
 
-环境变量(如mysql)
-以Volume挂载
+---
+    https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/
+    **说明**
+    东西流量，实现k8s集群内部网络调用、负载均衡(四层负载)
+    **常用创建命令**
+    **元素说明**
 
-##### 2.6.4、ConfigMap
-不加密的数据到etcd中，让Pod容器以 **环境变量形式** 或者 **挂载Volume方式** 进行访问
-场景：配置文件
+##### 2.6.7、Ingress
 
-使用命令行  kubectl create configmap 后面加特定参数进行创建
+---
+    https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/
+    **说明**
+    南北流量，将k8s内部的服务暴露给外网访问(七层负载)
+    **常用创建命令**
+    **元素说明**
 
-##### 2.6.5、集群的安全机制 RBAC(基于角色的安全准入)
+##### 2.6.8、Volume
 
-##### 2.6.6、Ingress
+---
+    https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
+    **说明**
+    数据存储卷
+    **常用创建命令**
+    **元素说明**
 
-https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/
+##### 2.6.9、ConfigMap
 
-**Ingress由于是k8s外的一个组件，需要和k8s的版本相适应**
-弥足把端口号对外暴露时使用 Service的NodePort方式实现，实现以不同的域名来访问不同的服务
-Ingress通过Service关联一组Pod，由Ingress作为统一入口。
+---
+    https://kubernetes.io/zh-cn/docs/concepts/configuration/configmap/
+    **说明**
+    KV类型的配置信息
+    **常用创建命令**
+    **元素说明**
 
-有很多的Ingress控制器
-https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress-controllers/
-而ingress-nginx是常用的一种
-https://kubernetes.github.io/ingress-nginx/deploy/
+##### 2.6.10、Secret
 
-可以使用helm进行安装，与之相适应的k8s版本 helm版本说明详见 https://github.com/kubernetes/ingress-nginx
+---
+    https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/
+    **说明**
+    用加密数据存储配置信息
+    **常用创建命令**
+    **元素说明**
 
-使用Ingress
-在master上，操作
-准备工作，创建deployment和NodePort类型的Service
-第一步：部署ingress controller (ingress-controller.yaml)
-wget https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.4.0/deploy/static/provider/baremetal/deploy.yaml
-将镜像地址修改
-
-第二步：创建ingress 规则 (ingress.yaml)
+##### 2.6.11、安全相关的
 
