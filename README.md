@@ -480,11 +480,13 @@ helm search repo xxx (xxx为包名)
 #### 2.5、资源类型
 
 ---
-    七大类:负载、服务、存储、配置、安全、策略、调度
+**七大类:负载、服务、存储、配置、安全、策略、调度**
+
     都是有两部分内容 属性(metadata)/期望(spec) <apiVersion和Kind 可以通过kubectl api-resources 查看>
     属性是定义资源的，可以用于显示(name)、被筛选(labels)、命名空间(namespaces)
     期望是描述调度器和控制器应该怎么做的，用来筛选(selector)、template(模板)、副本、重启策略、探针等等，类型不一样，支持的内容不一样。
-    **下面的分节，是对常用资源的元素的说明，包括说明、常用创建命令、元素说明**
+**下面的分节，是对常用资源的元素的说明，包括说明、常用创建命令、元素说明**
+    
     视频学习可以参考 叩丁狼的B站视频 https://www.bilibili.com/video/BV1MT411x7GH 
     通过kubectl api-resources 得到的APIVERSION KIND的信息分类
     k8s用的程序的深浅就是在下面这些资源类型的使用程序
@@ -499,16 +501,33 @@ helm search repo xxx (xxx为包名)
     6、策略 LimitRange 
     7、调度 Pod Label/Selector 污点/亲和性
 
-    在k8s/xxx(版本号(主要是1.23.6))/yaml/文件夹下是对资源类型学习的yaml-demo(这里可以根据自身角色的定位进行有选择的学习k8s，比如开发的深度就没有运维的高)
+**学习方法树说明**
+    
+    跟着视频章节、加(集群架构)果+(集群操作)因，来学来体会。    
+
+    k8s/xxx(版本号(主要是1.23.6))/k8s核心概念详解-上课画图.jpg      是wolfcode基于k8s-1.23.6的课程~结构图，是每个学习章节的集群架构。(出现的效果,果)
+    k8s/xxx(版本号(主要是1.23.6))/k8s 入门到微服务项目实战.xmind    是wolfcode基于k8s-1.23.6的课程~yaml及kubectl操作说明，是每个学习章节的操作。(执行的动作，因)
+    k8s/xxx(版本号(主要是1.23.6))/yaml/                         是wolfcode基于k8s-1.23.6的每个章节的yaml-demo
+    **这里可以根据自身角色的定位进行有选择的学习k8s，比如开发的深度就没有运维的高**
+    工作负载
     workloads
         ├─pods              ---Pod(无法动态更改的工作负载)
         ├─deployment        ---Deployment
         ├─statefulset       ---StatefulSet
         ├─daemonset         ---DaemonSet     
         └─jobs              ---Job/CronJob
+    
+    网络服务、负载均衡
+    network
+      ├─services            ---Service内部网络(集群内微服务互相通信)
+      │      └─NodePort     ---集群向外部提供服务，有selector，完成服务向集群外的提供服务。(场景，内部测试)
+      │      ├─ClusterIP    ---集群内部使用，无selector，可以通过创建Endpoints，属于反向代理,完成完成集群调用外部网络服务。(场景，服务迁移)
+      │      ├─ExternalName ---集群调用外部服务，无selector，属于反向代理，完成将外部网络的地址映射到内部一个域名上。(场景：将外部域名映射到内部域名，做重映射，比上面的ClusterIP方式下要调用外部网络的服务实现方便)
+      └─ingress             ---Ingress外部网络提供服务(集群通过外网向用户提供服务)
 
 
 #### 2.5.1、工作负载 Pod/Deployment/StatefulSet/DaemonSet/Job/CronJob
+**这里应该以分布式的服务提供者角度来看，是执行具体业务的容器，任何一个类型的都必然存在一个image(执行特点任务的)**
 
     ---1、无状态服务：认为Pod都是相同的，没有顺序要求，不用考虑在哪个node上运行，随意进行伸缩和扩展
     ---2、有状态服务：Pod是不一样的，有顺序要求，考虑在哪个node上运行，不可随意伸缩扩展；每个Pod独立，保持Pod的启动顺序和唯一性
@@ -553,8 +572,8 @@ helm search repo xxx (xxx为包名)
         livenessProbe 存活探针
         readinessProbe 就绪探针
         startupProbe 启动探针
-    **常用创建命令**
-        kubectl xxx pod (xxx 表示操作类型，一般创建就是手写 delete set describe)
+    **常用命令**
+        kubectl xxx pod (xxx 表示操作类型，一般创建就是手写 delete get set describe)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/pod
 
@@ -569,8 +588,8 @@ helm search repo xxx (xxx为包名)
         通过label和selector标签来建立Pod和Controller的关联关系
         部署、暂停/恢复、扩容/缩容、滚动升级/回归等
         应用场景 web服务 微服务
-    **常用创建命令**
-        kubectl xxx deployment (xxx 表示操作类型，create delete set describe)
+    **常用命令**
+        kubectl xxx deployment (xxx 表示操作类型，create delete get set describe)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/deployment
 
@@ -589,8 +608,8 @@ helm search repo xxx (xxx为包名)
 
         更新策略有OnDelete 当删除时才进行更新(可以达到更新指定的pod)
 
-    **常用创建命令**
-        kubectl xxx std (xxx 表示操作类型，一般用文件创建 delete set describe)
+    **常用命令**
+        kubectl xxx sts (xxx 表示操作类型，一般用文件创建 delete get set describe)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/statefulset
 
@@ -603,41 +622,77 @@ helm search repo xxx (xxx为包名)
     场景:日志收集组件fluentd,搜集日志，将日志发送到指定节点。
     按节点进行部署。spec.template.spec.nodeSelector
     命令行  kubectl label no xxx(node的hostname) 向节点添加label
-
-    **常用创建命令**
+    **常用命令**
+         kubectl xxx ds (xxx 表示操作类型，一般用文件创建 delete get set describe)
     **元素说明**
-
+        详见 k8s/xxx/yaml/workfloads/daemonset
 ##### 2.5.1.5、Job
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/job/
     **说明**
     一次性任务
-    **常用创建命令**
+    **常用命令**
+        kubectl xxx job (xxx 表示操作类型，create delete get set describe)
     **元素说明**
-
+        详见 k8s/xxx/yaml/workfloads/jobs
 ##### 2.5.1.6、CronJob
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/cron-jobs/
     **说明**
     周期性任务
-    **常用创建命令**
+    **常用命令**
+        kubectl xxx cronjob (xxx 表示操作类型，create delete get set describe)
     **元素说明**
+        详见 k8s/xxx/yaml/workfloads/jobs
 
-#### 2.5.2、网络服务、负载均衡 Service/Ingress
+#### 2.5.2、网络服务、负载均衡 Service/Endpoints/Ingress
+**这里应该是路由表的角度来看，iptables，endpoints**    
 
     Service是容器内部通信
+        这里Service体现的就是微服务，基于端口的服务提供，而Pod是分布式的，是藏在Service后面的。
     Ingress是容器对外提供服务
+        
 
 ##### 2.5.2.1、Service
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/
     **说明**
-    东西流量，实现k8s集群内部网络调用、负载均衡(四层负载)
-    **常用创建命令**
+    东西流量，实现k8s集群内部网络调用、负载均衡(四层负载) 集群内部可以通过域名访问(service的metadata.name.命名空间(default的话可以不用写，同一命名空间也不用写))
+    Service 能够将任意入站 port 映射到某个 targetPort。 默认情况下，出于方便考虑，targetPort 会被设置为与 port 字段相同的值。
+    从集群内部服务间调用、集群向外提供服务、集群调用外部服务 三个角度来学习。
+
+    sped.type有三种类型
+    ClusterIP:(默认) 
+        集群内部微服务之间调用。svc-svc
+        通过集群的内部 IP 公开 Service，选择该值时 Service 只能够在集群内部访问。spec没有selector
+        创建后有svc 没有endpoints，需要自己创建Kind为Endpoints的
+    NodePort:
+        集群向外提供服务。usr-svc
+        通过每个节点上的 IP 和静态端口（NodePort）公开 Service。 
+        为了让 Service 可通过节点端口访问，Kubernetes 会为 Service 配置集群 IP 地址， 
+        相当于你请求了 type: ClusterIP 的 Service
+        创建后，有svc endpoints
+    LoadBalancer:
+        自己学习环境没有云服务商，暂时没学。
+        使用云平台的负载均衡器向外部公开 Service。Kubernetes 不直接提供负载均衡组件；
+        你必须提供一个，或者将你的 Kubernetes 集群与某个云平台集成。
+    ExternalName:
+        集群调用外部服务。svc-external
+        将服务映射到 externalName 字段的内容（例如，映射到主机名 api.foo.bar.example）。 
+        该映射将集群的 DNS 服务器配置为返回具有该外部主机名值的 CNAME 记录。 
+        集群不会为之创建任何类型代理。
+    **常用命令**
+        kubectl xxx service (xxx 表示操作类型，create delete get set describe)
     **元素说明**
+        详见 k8s/xxx/yaml/network/services
+        NodePort
+            k8s/xxx/yaml/network/services/NodePort
+        ClusterIP
+            k8s/xxx/yaml/network/services/ClusterIP
+
 
 ##### 2.5.2.1、Ingress
 
@@ -645,8 +700,9 @@ helm search repo xxx (xxx为包名)
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/
     **说明**
     南北流量，将k8s内部的服务暴露给外网访问(七层负载)
-    **常用创建命令**
+    **常用命令**
     **元素说明**
+        详见 k8s/xxx/yaml/network/ingress
 
 #### 2.5.3、存储(Volume)
 
