@@ -401,8 +401,7 @@
 
     kubectl 是通过yaml文件形成http请求，向restful api风格接口的ApiServer发送请求
     (apiVersion 可以通过 kubectl api-versions查询，kind 可以通过 kubectl api-resources查询)
-    xxxProbe 是属于探针的，用于探查应用的保活
-    helm是k8s的包管理器
+
 
 ##### 2.3.1、资源管理和编排部署的文件(yaml)
 
@@ -431,7 +430,7 @@
     **一般编排文件的组成部分(再2.5 2.6章节有具体的说明，在练习中学习)**：
     以template为分割的
     
-    ---控制器定义
+    ---资源定义
     
     apiVersion      API版本 kubectl api-versions
     kind            资源类型 kubectl api-resources
@@ -478,65 +477,39 @@ helm repo update
 helm search repo xxx (xxx为包名)
 
 
-#### 2.5、Pod
-    图示创建Pod的过程
-![createPod](images/createPod.png)
+#### 2.5、资源类型
 
-    Pod是所有资源清单中Kind的元类
-##### 2.5.1、关于Pod
-    1、基本概念：
-    最小的部署单元；Pod里面是一组容器的组合；一个Pod中的容器共享网络命名空间；pod是短暂存在的
-    2、存在的意义：
-    一个容器，运行一个应用程序，是一个进程；Pod是多进程设计(1个pause根容器和用户容器)；亲密性应用(应用间的通信)
-    3、实现机制：
-    共享网络,通过pause容器把其他的业务容器加入到同一命名空间中。
-    共享存储，持久化存储Volume数据卷
-    4、镜像拉取策略：
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.14
-          imagePullPolicy: Alaways # IfNotPresent Always Never
-    5、资源限制：
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.14
-          resources:
-            requests:
-              memory: "64Mi"
-              cpu: "250m"
-            limits:
-              memory: "64Mi"
-              cpu: "250m"
-    6、重启机制：
-    spec:
-      restartPolicy: Never # Always OnFailure Never
-      containers:
-    7、健康检查：
-    spec:
-      containers:
-        - name: nginx
-          image: nginx:1.14
-          livenessProbe: # livenessProbe存活检查 readinessProbe就绪检查
-            exec: # httpGet exec tcpSocket
-              command:
-              - cat
-              - /tmp/healthy
-            initialDelaySeconds: 5
-            periodSeconds: 5
-    
-    livenessProbe存活检查;如果检查失败，杀死容器，根据Pod的restartPolicy来操作
-    readinessProbe就绪检查；如果检查失败，k8s会把Pod从service endpoints中剔除，漂移到其他节点上
-    提供的三种检查方式
-    httpGet 返回200-400为成功
-    exec 执行shell命令返回状态码为0成功 (例如：可以在应用执行完毕后生成一个文件，然后执行cat 这个文件，看返回码)
-    tcpSocket 发起TCP Socket建立成功
+---
+    七大类:负载、服务、存储、配置、安全、策略、调度
+    都是有两部分内容 属性(metadata)/期望(spec) <apiVersion和Kind 可以通过kubectl api-resources 查看>
+    属性是定义资源的，可以用于显示(name)、被筛选(labels)、命名空间(namespaces)
+    期望是描述调度器和控制器应该怎么做的，用来筛选(selector)、template(模板)、副本、重启策略、探针等等，类型不一样，支持的内容不一样。
+    **下面的分节，是对常用资源的元素的说明，包括说明、常用创建命令、元素说明**
+    视频学习可以参考 叩丁狼的B站视频 https://www.bilibili.com/video/BV1MT411x7GH 
+    通过kubectl api-resources 得到的APIVERSION KIND的信息分类
+    k8s用的程序的深浅就是在下面这些资源类型的使用程序
+    在 https://kubernetes.io/zh-cn/docs/concepts/ 下
+    它们分为 7类，必须掌握的是负载、服务、存储、配置(涉及了服务的生命周期管理、对外服务暴露、数据存放、配置相关，都是紧紧要的)。
+    其他的慢慢来，其实后面的多多少少不是独立存在的，需要嵌套写入到前面4项中。
+    1、负载 Pod、Deployment、StatefulSet、DaemonSet、Job、CronJob
+    2、服务 Service、Ingress
+    3、存储 Volume Pod
+    4、配置 ConfigMap、Secret、探针
+    5、安全 ServiceAccount RBAC(基于角色的访问控制)
+    6、策略 LimitRange 
+    7、调度 Pod Label/Selector 污点/亲和性
 
-    创建时调度策略，可以用的时候现查，(随着使用的熟练后，这块就熟能生巧了)
+    在k8s/xxx(版本号(主要是1.23.6))/yaml/文件夹下是对资源类型学习的yaml-demo(这里可以根据自身角色的定位进行有选择的学习k8s，比如开发的深度就没有运维的高)
+    workloads
+        ├─pods              ---Pod(无法动态更改的工作负载)
+        ├─deployment        ---Deployment
+        ├─statefulset       ---StatefulSet
+        ├─daemonset         ---DaemonSet     
+        └─jobs              ---Job/CronJob
 
-#### 2.6、Controller
-    以运维常做的工作特点看，服务有以下的分类特点
+
+#### 2.5.1、工作负载 Pod/Deployment/StatefulSet/DaemonSet/Job/CronJob
+
     ---1、无状态服务：认为Pod都是相同的，没有顺序要求，不用考虑在哪个node上运行，随意进行伸缩和扩展
     ---2、有状态服务：Pod是不一样的，有顺序要求，考虑在哪个node上运行，不可随意伸缩扩展；每个Pod独立，保持Pod的启动顺序和唯一性
     ---3、守护进程:DaemonSet
@@ -556,38 +529,52 @@ helm search repo xxx (xxx为包名)
     任务/定时任务
     Job 一次性
     Cronjob 周期性
----
-**下面的分节，是对常用控制器的元素的说明，包括说明、常用创建命令、元素说明**
-视频学习可以参考 叩丁狼的B站视频 https://www.bilibili.com/video/BV1MT411x7GH 
-通过kubectl api-resources 得到的APIVERSION KIND的信息分类
-k8s用的程序的深浅就是在下面这些资源类型的使用程序
-在 https://kubernetes.io/zh-cn/docs/concepts/ 下
-它们分为 7类，必须掌握的是控制器、服务、存储、配置(涉及了服务的生命周期管理、对外服务暴露、数据存放、配置相关，都是紧紧要的)。
-其他的慢慢来，其实后面的多多少少不是独立存在的，需要嵌套写入到前面4项中。
-1、控制器 Deployment、StatefulSet、DaemonSet、Job、CronJob
-2、服务 Service、Ingress
-3、存储 Volume Pod
-4、配置 ConfigMap、Secret、探针
-5、安全 ServiceAccount RBAC(基于角色的访问控制)
-6、策略 LimitRange 
-7、调度 Pod Label/Selector 污点/亲和性
 
-##### 2.6.1、Deployment
+    HPA 自动扩容缩容 https://kubernetes.io/zh-cn/docs/concepts/workloads/autoscaling/
+
+##### 2.5.1.1、Pod
+
+---
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/
+    图示创建Pod的过程
+![createPod](images/createPod.png)
+
+    **说明**
+        1、基本概念：
+        最小的部署单元；Pod里面是一组容器的组合；一个Pod中的容器共享网络命名空间；pod是短暂存在的
+        2、存在的意义：
+        一个容器，运行一个应用程序，是一个进程；Pod是多进程设计(1个pause根容器和用户容器)；亲密性应用(应用间的通信)
+        3、实现机制：
+        共享网络,通过pause容器把其他的业务容器加入到同一命名空间中。
+        共享存储，持久化存储Volume数据卷
+        4、重启策略决定容器挂掉后该怎么操作，而探针来实现获取容器是否存在(https://kubernetes.io/zh-cn/docs/concepts/configuration/liveness-readiness-startup-probes/)
+        spec.template.spec.restartPolicy
+        spec.template.spec.containers[].xxxProbe
+        livenessProbe 存活探针
+        readinessProbe 就绪探针
+        startupProbe 启动探针
+    **常用创建命令**
+        kubectl xxx pod (xxx 表示操作类型，一般创建就是手写 delete set describe)
+    **元素说明**
+        详见 k8s/xxx/yaml/workfloads/pod
+
+**但是因为原生Pod的扩容/升级很不方便，所以出现了按业务类型分类管理的Deployment/StatefulSet/DaemonSet/Job/CronJob**
+
+##### 2.5.1.2、Deployment
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/deployment/
     **说明**
-        最常用的部署无状态服务的控制器
+        最常用的部署无状态服务的资源
         通过label和selector标签来建立Pod和Controller的关联关系
         部署、暂停/恢复、扩容/缩容、滚动升级/回归等
         应用场景 web服务 微服务
     **常用创建命令**
-        kubectl create deployment 
-        创建了模板后，进行修改
+        kubectl xxx deployment (xxx 表示操作类型，create delete set describe)
     **元素说明**
-        
+        详见 k8s/xxx/yaml/workfloads/deployment
 
-##### 2.6.2、StatefulSet
+##### 2.5.1.3、StatefulSet
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/statefulset/
@@ -595,21 +582,32 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
         部署有状态应用，部署、暂停/恢复、扩容/缩容、滚动升级/回归等
         Headless Service DNS管理(网络)
         volumeClaimTemplates 持久化卷(存储)
-    **常用创建命令**
-        暂无
-    **元素说明**
         
+        灰度发布/金丝雀发布 目的是将项目上线后产生问题的影响，尽量降到最低。
+        做法就是先更新整个副本的一小部分，如果确认没问题，就更新全部，有问题，就回滚这一小部分。
+        利用 spec.updateStrategy.rollingUpdate.partition字段进行分区更新(倒序的顺序)       
 
-##### 2.6.3、DaemonSet
+        更新策略有OnDelete 当删除时才进行更新(可以达到更新指定的pod)
+
+    **常用创建命令**
+        kubectl xxx std (xxx 表示操作类型，一般用文件创建 delete set describe)
+    **元素说明**
+        详见 k8s/xxx/yaml/workfloads/statefulset
+
+##### 2.5.1.4、DaemonSet
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/
     **说明**
-    守护进程，比如通过标签来进行节点调度
+    守护进程，每个节点最多一个。
+    场景:日志收集组件fluentd,搜集日志，将日志发送到指定节点。
+    按节点进行部署。spec.template.spec.nodeSelector
+    命令行  kubectl label no xxx(node的hostname) 向节点添加label
+
     **常用创建命令**
     **元素说明**
 
-##### 2.6.4、Job
+##### 2.5.1.5、Job
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/job/
@@ -618,7 +616,7 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
     **常用创建命令**
     **元素说明**
 
-##### 2.6.5、CronJob
+##### 2.5.1.6、CronJob
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/cron-jobs/
@@ -627,7 +625,12 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
     **常用创建命令**
     **元素说明**
 
-##### 2.6.6、Service
+#### 2.5.2、网络服务、负载均衡 Service/Ingress
+
+    Service是容器内部通信
+    Ingress是容器对外提供服务
+
+##### 2.5.2.1、Service
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/
@@ -636,7 +639,7 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
     **常用创建命令**
     **元素说明**
 
-##### 2.6.7、Ingress
+##### 2.5.2.1、Ingress
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/
@@ -645,7 +648,7 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
     **常用创建命令**
     **元素说明**
 
-##### 2.6.8、Volume
+#### 2.5.3、存储(Volume)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
@@ -654,7 +657,7 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
     **常用创建命令**
     **元素说明**
 
-##### 2.6.9、ConfigMap
+#### 2.5.4、配置(ConfigMap)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/configuration/configmap/
@@ -663,7 +666,7 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
     **常用创建命令**
     **元素说明**
 
-##### 2.6.10、Secret
+#### 2.5.5、安全(Secret)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/
@@ -672,5 +675,11 @@ k8s用的程序的深浅就是在下面这些资源类型的使用程序
     **常用创建命令**
     **元素说明**
 
-##### 2.6.11、安全相关的
+#### 2.5.6、策略(LimitRange/NetworkPolicy/ResourceQuota)
 
+---
+    https://kubernetes.io/zh-cn/docs/concepts/policy/
+    **说明**
+    用加密数据存储配置信息
+    **常用创建命令**
+    **元素说明**
