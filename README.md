@@ -618,10 +618,10 @@ helm search repo xxx (xxx为包名)
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/
     **说明**
-    守护进程，每个节点最多一个。
-    场景:日志收集组件fluentd,搜集日志，将日志发送到指定节点。
-    按节点进行部署。spec.template.spec.nodeSelector
-    命令行  kubectl label no xxx(node的hostname) 向节点添加label
+        守护进程，每个节点最多一个。
+        场景:日志收集组件fluentd,搜集日志，将日志发送到指定节点。
+        按节点进行部署。spec.template.spec.nodeSelector
+        命令行  kubectl label no xxx(node的hostname) 向节点添加label
     **常用命令**
          kubectl xxx ds (xxx 表示操作类型，一般用文件创建 delete get set describe)
     **元素说明**
@@ -631,7 +631,7 @@ helm search repo xxx (xxx为包名)
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/job/
     **说明**
-    一次性任务
+        一次性任务
     **常用命令**
         kubectl xxx job (xxx 表示操作类型，create delete get set describe)
     **元素说明**
@@ -641,7 +641,7 @@ helm search repo xxx (xxx为包名)
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/cron-jobs/
     **说明**
-    周期性任务
+        周期性任务
     **常用命令**
         kubectl xxx cronjob (xxx 表示操作类型，create delete get set describe)
     **元素说明**
@@ -660,30 +660,30 @@ helm search repo xxx (xxx为包名)
 ---
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/
     **说明**
-    东西流量，实现k8s集群内部网络调用、负载均衡(四层负载) 集群内部可以通过域名访问(service的metadata.name.命名空间(default的话可以不用写，同一命名空间也不用写))
-    Service 能够将任意入站 port 映射到某个 targetPort。 默认情况下，出于方便考虑，targetPort 会被设置为与 port 字段相同的值。
-    从集群内部服务间调用、集群向外提供服务、集群调用外部服务 三个角度来学习。
-
-    sped.type有三种类型
-    ClusterIP:(默认) 
-        集群内部微服务之间调用。svc-svc
-        通过集群的内部 IP 公开 Service，选择该值时 Service 只能够在集群内部访问。spec没有selector
-        创建后有svc 没有endpoints，需要自己创建Kind为Endpoints的
-    NodePort:
-        集群向外提供服务。usr-svc
-        通过每个节点上的 IP 和静态端口（NodePort）公开 Service。 
-        为了让 Service 可通过节点端口访问，Kubernetes 会为 Service 配置集群 IP 地址， 
-        相当于你请求了 type: ClusterIP 的 Service
-        创建后，有svc endpoints
-    LoadBalancer:
-        自己学习环境没有云服务商，暂时没学。
-        使用云平台的负载均衡器向外部公开 Service。Kubernetes 不直接提供负载均衡组件；
-        你必须提供一个，或者将你的 Kubernetes 集群与某个云平台集成。
-    ExternalName:
-        集群调用外部服务。svc-external
-        将服务映射到 externalName 字段的内容（例如，映射到主机名 api.foo.bar.example）。 
-        该映射将集群的 DNS 服务器配置为返回具有该外部主机名值的 CNAME 记录。 
-        集群不会为之创建任何类型代理。
+        东西流量，实现k8s集群内部网络调用、负载均衡(四层负载) 集群内部可以通过域名访问(service的metadata.name.命名空间(default的话可以不用写，同一命名空间也不用写))
+        Service 能够将任意入站 port 映射到某个 targetPort。 默认情况下，出于方便考虑，targetPort 会被设置为与 port 字段相同的值。
+        从集群内部服务间调用、集群向外提供服务、集群调用外部服务 三个角度来学习。
+    
+        spec.type有三种类型
+        ClusterIP:(默认) 
+            集群内部微服务之间调用。svc-svc
+            通过集群的内部 IP 公开 Service，选择该值时 Service 只能够在集群内部访问。spec没有selector
+            创建后有svc 没有endpoints，需要自己创建Kind为Endpoints的
+        NodePort:
+            集群向外提供服务。usr-svc
+            通过每个节点上的 IP 和静态端口（NodePort）公开 Service。 
+            为了让 Service 可通过节点端口访问，Kubernetes 会为 Service 配置集群 IP 地址， 
+            相当于你请求了 type: ClusterIP 的 Service
+            创建后，有svc endpoints
+        LoadBalancer:
+            自己学习环境没有云服务商，暂时没学。
+            使用云平台的负载均衡器向外部公开 Service。Kubernetes 不直接提供负载均衡组件；
+            你必须提供一个，或者将你的 Kubernetes 集群与某个云平台集成。
+        ExternalName:
+            集群调用外部服务。svc-external
+            将服务映射到 externalName 字段的内容（例如，映射到主机名 api.foo.bar.example）。 
+            该映射将集群的 DNS 服务器配置为返回具有该外部主机名值的 CNAME 记录。 
+            集群不会为之创建任何类型代理。
     **常用命令**
         kubectl xxx service (xxx 表示操作类型，create delete get set describe)
     **元素说明**
@@ -699,12 +699,116 @@ helm search repo xxx (xxx为包名)
 ---
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/
     **说明**
-    南北流量，将k8s内部的服务暴露给外网访问(七层负载)
+        南北流量，将k8s内部的服务暴露给外网访问(七层负载)
+        通过helm安装ingress-nginx
+            ingress-nginx是一个类型的ingress-controller,在上面的网站上有很多种控制器的说明。
+            既然是控制器，就可以参照k8s默认的控制器一样，单独开辟一个命名空间来安装控制器(后面自己的ingress，是需要和service、deployment/statefulset 在一个命名空间的)
+        1、下载安装包
+        通过在 github上搜索 ingress-nginx，进入 https://github.com/kubernetes/ingress-nginx，在release中选择与k8s版本相适应的
+        下载压缩包，解压后，在values.yaml中修改镜像地址(因为默认的地址是被墙的)
+        2、修改values.yaml
+        镜像地址：修改为国内镜像
+        ---21行，修改地址，注释掉hash校验
+        registry: registry.cn-hangzhou.aliyuncs.com
+        image: google_containers/nginx-ingress-controller
+        ---66行
+        dnsPolicy: ClusterFirstWithHostNet
+        ---89行
+        hostNetwork: true
+        ---194行
+        修改部署配置的 kind: DaemonSet
+        nodeSelector:
+          ingress: "true" # 增加选择器，如果 node 上有 ingress=true 就部署
+        ---508行
+        将 service 中的 type 由 LoadBalancer 修改为 ClusterIP，如果服务器是云平台才用 LoadBalancer
+        ---607行，因为https涉及一些证书原因，暂时用不上
+        将 admissionWebhooks.enabled 修改为 false
+        ---659行，修改地址，注释掉hash校验
+        registry: registry.cn-hangzhou.aliyuncs.com
+        image: google_containers/kube-webhook-certgen
+        tag: v1.3.0
+        3、创建命名空间
+        kubectl create ns ingress-nginx
+        4、为需要部署 ingress 的节点上加标签
+        kubectl label node k8s-node1 ingress=true
+        5、安装 ingress-nginx
+        helm install ingress-nginx -n ingress-nginx .
+        6、可以编写自己的ingress
+            自己的ingress其实ingress-controller的域名路由规则，是具体的一个业务容器，是需要运行在特定的node节点上的。
+            同时，运行成功后，可以在运行的node节点上，执行sudo netstat -ntlp |grep 端口，来看监听情况
+    
+        spec.rules[].http.paths[].pathType需要指定类型，按照路径类型进行匹配
+        Prefix
+            以 / 作为分隔符来进行前缀匹配
+        ImplementationSpecific 
+            需要指定 IngressClass，具体匹配规则以 IngressClass 中的规则为准
+        Exact
+            精确匹配，URL需要与path完全匹配上，且区分大小写的
+    
     **常用命令**
+         kubectl xxx ingress (xxx 表示操作类型，创建一般用编写文件的形式，因为要配置的地方少 delete get set describe)
     **元素说明**
-        详见 k8s/xxx/yaml/network/ingress
+        详见 k8s/xxx/yaml/network/ingress (目录下有个多路径的配置 wolfcode-multi-ingress.yaml)
+        Prefix
+            k8s/xxx/yaml/network/ingress/Prefix
+        ImplementationSpecific
+            k8s/xxx/yaml/network/ingress/ImplementationSpecific
+        Exact
+            k8s/xxx/yaml/network/ingress/Exact
 
-#### 2.5.3、存储(Volume)
+#### 2.5.3、配置(ConfigMap/Secret)
+
+---
+    https://kubernetes.io/zh-cn/docs/concepts/configuration/configmap/ 明文
+    https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/ 加密数据
+    **说明**
+        ConfigMap
+        KV类型的配置信息
+        Secret
+        用加密数据存储配置信息
+
+        实现热更新的效果
+    **常用创建命令**
+         kubectl xxx configmap(或者secret) (xxx 表示操作类型，create delete get set describe)
+    **元素说明**
+        详见 k8s/xxx/yaml/config
+        ConfigMap
+            k8s/xxx/yaml/config/ConfigMap
+            
+            创建
+            3种方式，**但是教程是用命令行的方式创建的，其实还是按照官网的例子，通过yaml文件来创建最好了(留下创建时的yaml，就很helm类似了，后面再去回想，修改对于新手都比较容易了)**
+            
+            test文件夹，是基于文件夹创建cm的，有了文件夹后和里面相应的.properties文件执行
+            kubectl create configmap test-dir-config --from-file=test 来新建cm
+            更多的使用的基于文件的， 
+            
+            application.yml 是基于文件的
+            kubectl create configmap spring-boot-test-yaml --from-file=application.yml
+
+            命令行直接写参数的
+            kubectl create configmap test-key-value-config --from-literal=KEY=VALUE
+            kubectl create configmap test-env-config --from-literal=JAVA_OPTS_TEST='-Xms512m -Xmx512m' --from-literal=APP_NAME=my-test
+            
+            nginx.conf 是从运行的nginx容器拷贝出来，
+            执行 kubectl create configmap nginx-config-cm --from-file=nginx.conf
+            使用 deployent/nginx-deploy.yaml 把数据卷挂载的注释打开后，进行测试(注意subPath解决文件覆盖容器内所有文件的问题)
+
+            使用
+            (就是在Pod种使用,KV类型的数值，可以用在环境变量，文件路径(卷加载))
+            env-test-pod.yaml 是加载环境变量的测试 测试的cm是 test-env-config
+            file-test-pod.yaml 是加载文件的，是  kubectl create configmap test-dir-config --from-file=test
+
+        Secret
+            k8s/xxx/yaml/config/Secret (一般用的较少，因为加密方式是base64，不能算是加密)
+            创建
+            kubectl create secret generic orig-secret --from-literal=KEY=VALUE
+            常用的是 kubectl create secret docker-registry
+            
+            使用
+            先用 kubectl create secret docker-registry harbor-secret 后面跟指定格式的参数，来创建配置
+            然后 使用private-image-pull-pod.yaml 来测试拉取指定地址的docker镜像
+
+#### 2.5.4、存储(Volume)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
@@ -713,25 +817,7 @@ helm search repo xxx (xxx为包名)
     **常用创建命令**
     **元素说明**
 
-#### 2.5.4、配置(ConfigMap)
-
----
-    https://kubernetes.io/zh-cn/docs/concepts/configuration/configmap/
-    **说明**
-    KV类型的配置信息
-    **常用创建命令**
-    **元素说明**
-
-#### 2.5.5、安全(Secret)
-
----
-    https://kubernetes.io/zh-cn/docs/concepts/configuration/secret/
-    **说明**
-    用加密数据存储配置信息
-    **常用创建命令**
-    **元素说明**
-
-#### 2.5.6、策略(LimitRange/NetworkPolicy/ResourceQuota)
+#### 2.5.5、策略(LimitRange/NetworkPolicy/ResourceQuota)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/policy/

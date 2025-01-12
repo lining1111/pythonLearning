@@ -25,5 +25,16 @@ spec:
       - image: nginx:1.7.9
         imagePullPolicy: IfNotPresent
         name: nginx #容器的名称
+#        volumeMounts: #挂载数据卷
+#          - name: nginx-config #数据卷的名称 必须与volumes 种的某一个一致
+#            mountPath: /etc/nginx/nginx.config #挂载到容器种的路径
+#            subPath: etc/nginx/nginx.conf # 这种方式防止目录覆盖
+#      volumes: #数据卷定义
+#        - name: nginx-config #数据卷名称
+#          configMap: #数据卷类型
+#            name: nginx-conf-cm #configmap的名称，必须与以存在的configmap一致
+#            items:
+#            - key: nginx.conf # configmap的键值
+#              path: etc/nginx/nginx.conf #挂载后的文件名称
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
