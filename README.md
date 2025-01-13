@@ -553,6 +553,13 @@ helm search repo xxx (xxx为包名)
       ├─taint_toleration---污点 使节点能够排斥一类特定的 Pod;容忍 是应用于 Pod 上的。容忍度允许调度器调度带有对应污点的 Pod
       └─affinity        ---亲和力 使Pod尽可能的往一个节点上调度
 
+    访问控制(更偏运维的，如果只想到开发角色的CI/CD，到上面的就好了)
+    security        --安全控制的，专业运维的范畴
+      ├─ServiceAccount          ---服务账号，作用到Pod的
+      ├─Role                    ---单角色权限
+      ├─RoleBinding             ---单角色与账号绑定
+      ├─ClusterRole             ---集群角色权限
+      └─ClusterRoleBinding      ---集群角色与账号绑定
 
 
 #### 2.5.1、工作负载 Pod/Deployment/StatefulSet/DaemonSet/Job/CronJob
@@ -965,14 +972,22 @@ helm search repo xxx (xxx为包名)
                     nginx-affinity-deploy.yaml 部署的时候，因为亲和力的原因，总是尽力和s1一起，然后才是和s2一起
         
 
-#### 2.5.6、访问控制
+#### 2.5.6、访问控制(ServiceAccount)
 
 ---
-    https://kubernetes.io/zh-cn/docs/concepts/policy/
+    https://kubernetes.io/zh-cn/docs/concepts/security/
     **说明**
-    用加密数据存储配置信息
+        与访问控制相关的
+        所有的k8s集群有两类用户：
+            由k8s管理的ServiceAccounts 服务账户 是针对Pod进程的
+            UserAccounts 普通账户 是假定被外部或者独立服务管理的，由管理员分配keys，用户像使用账号一样获得权限
+            
+            这部分主要是讲ServiceAccounts，标识服务的身份，同时还有和RBAC做绑定，获取权限
+            应用场景：自己写的应用需要通过k8s的接口来获取集群信息时，就需要为运行它的Pod配置账号和相应的权限
+
     **常用创建命令**
     **元素说明**
+        视频是用ingress-nginx来讲解的，因为是专业运维的范畴，制作CI/CD就不用那么深入了
 
 
 ### 3、分布式容器技术(Docker/K8S)小结
