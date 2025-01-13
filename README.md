@@ -478,7 +478,11 @@ helm search repo xxx (xxx为包名)
 
 
 #### 2.5、资源类型
-
+    
+    k8s是专业的运维工具，如果是开发的角色，要了解或者加强自己的运维能力，那么可以有选择了学习，只要达到自己的运维目的即可。
+    linux是一个庞大且复杂的系统，因为开源的原因，世界上很多智力超群的人对它最了贡献，个人在linux系统学习中切记不要把自己逼得要做很精的样子，
+    要明白大部分的事故都是前人遇到并解决了的，找到方案，并正确的使用出来，才是在有限的时间内出产最大成果的方法。
+    技术不是用来攀比的，是来解决实际问题的，吾生也有涯，而知也无涯。以有涯随无涯，殆已！
 ---
 **七大类:负载、服务、存储、配置、安全、策略、调度**
 
@@ -509,21 +513,46 @@ helm search repo xxx (xxx为包名)
     k8s/xxx(版本号(主要是1.23.6))/k8s 入门到微服务项目实战.xmind    是wolfcode基于k8s-1.23.6的课程~yaml及kubectl操作说明，是每个学习章节的操作。(执行的动作，因)
     k8s/xxx(版本号(主要是1.23.6))/yaml/                         是wolfcode基于k8s-1.23.6的每个章节的yaml-demo
     **这里可以根据自身角色的定位进行有选择的学习k8s，比如开发的深度就没有运维的高**
+    **k8s薄总结就是(类--->实体，向外提供服务、Pod间通信及数据存储)，具体操作是:(class)编写yaml资源调度文件，(entity)在一个命名空间内，生成各种资源类型的Pod,来完成集群向外提供服务、微服务间通信、数据存储等功能**
     工作负载
-    workloads
-        ├─pods              ---Pod(无法动态更改的工作负载)
-        ├─deployment        ---Deployment
-        ├─statefulset       ---StatefulSet
-        ├─daemonset         ---DaemonSet     
-        └─jobs              ---Job/CronJob
+    workloads   ---实际运行业务的Pod
+      ├─pods              ---Pod(无法动态更改的工作负载)
+      ├─deployment        ---Deployment(常用的无状态应用)
+      ├─statefulset       ---StatefulSet(常用的有状态应用)
+      ├─daemonset         ---DaemonSet(日志系统类的应用)     
+      └─jobs              ---Job/CronJob(自定义任务)
     
     网络服务、负载均衡
-    network
+    network     ---集群内部通信用
       ├─services            ---Service内部网络(集群内微服务互相通信)
       │      └─NodePort     ---集群向外部提供服务，有selector，完成服务向集群外的提供服务。(场景，内部测试)
       │      ├─ClusterIP    ---集群内部使用，无selector，可以通过创建Endpoints，属于反向代理,完成完成集群调用外部网络服务。(场景，服务迁移)
-      │      ├─ExternalName ---集群调用外部服务，无selector，属于反向代理，完成将外部网络的地址映射到内部一个域名上。(场景：将外部域名映射到内部域名，做重映射，比上面的ClusterIP方式下要调用外部网络的服务实现方便)
-      └─ingress             ---Ingress外部网络提供服务(集群通过外网向用户提供服务)
+      │      └─ExternalName ---集群调用外部服务，无selector，属于反向代理，完成将外部网络的地址映射到内部一个域名上。(场景：将外部域名映射到内部域名，做重映射，比上面的ClusterIP方式下要调用外部网络的服务实现方便)
+      └─ingress  ---外部网络提供服务(集群通过外网向用户提供服务)
+             ├─Prefix                   ---路径类型:以 / 作为分隔符来进行前缀匹配
+             ├─Exact                    ---路径类型:精确匹配，URL需要与path完全匹配上，且区分大小写的
+             └─ImplementationSpecific   ---路径类型:需要指定 IngressClass，具体匹配规则以 IngressClass 中的规则为准
+
+    配置
+    config    ---配置。可以实现动态更新的作用
+      ├─ConfigMap          ---明文存储的KV值
+      └─Secret             ---默认是base64编码的KV值
+
+    存储(持久化存储)
+    store   ---存储，容器被调度后，内部数据就不存在了。业务都是逻辑类的东西，是需要将数据、日志等存在一个可持久化的地方。       
+      └─volumes     ---声明存储的地方，类型有以下4种
+          ├─emptyDir    ---空目录，用于一个Pod种不同容器的存储通信，不是持久化的
+          ├─hostPath    ---主机路径，将工作节点中的目录挂载到Pod中的容器，实现mount的效果。持久化的
+          ├─nfs         ---nfs存储服务器挂载，实现不同节点上存储的挂载，持久化的
+          └─pv-pvc      ---k8s中最常用的一种持久化存储方式，有静态和动态两种形式。
+
+    高级调度相关 (如果这种高级调度学不会，就用基础的label/selector)
+    schedule    ---调度相关，除了定时任务和初始化容器外，都是控制Pod去哪个节点的
+      ├─cronjob         ---定时任务 定时启动一个Pod来执行一个简短的任务
+      ├─InitContainer   ---初始化容器 是一种特殊的容器，在一个Pod内的应用容器启动前运行的
+      ├─taint_toleration---污点 使节点能够排斥一类特定的 Pod;容忍 是应用于 Pod 上的。容忍度允许调度器调度带有对应污点的 Pod
+      └─affinity        ---亲和力 使Pod尽可能的往一个节点上调度
+
 
 
 #### 2.5.1、工作负载 Pod/Deployment/StatefulSet/DaemonSet/Job/CronJob
@@ -808,16 +837,135 @@ helm search repo xxx (xxx为包名)
             先用 kubectl create secret docker-registry harbor-secret 后面跟指定格式的参数，来创建配置
             然后 使用private-image-pull-pod.yaml 来测试拉取指定地址的docker镜像
 
-#### 2.5.4、存储(Volume)
+#### 2.5.4、持久化存储(Volume/NFS挂载/PV-PVC)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
     **说明**
-    数据存储卷
+        持久化存储
+        volumes:数据卷(hostPat/emptyDir/nfs)
+                hostPath:主机的目录共享到容器，双方共同使用这个目录，类似mount
+                emptyDir:不是持久化存储的，在一个Pod有多个容器时使用，用于它们之间的存储通信
+                nfs:可以预先填充数据，并实现这些数据在不同Pod间的共享，有稳定较低和io慢的特点
+                    1、要使用nfs功能，需要先安装nfs服务端
+                        sudo apt install nfs-kernel-server
+                    2、在要做nfs文件服务器的节点上，创建共享目录
+                        sudo mkdir -p /home/nfs
+                        cd /home/nfs
+                        sudo mkdir rw
+                        sudo mkdir ro
+                    3、设置共享目录
+                        vim /etc/exports
+                        在文件中添加(rw 可读可写 ro只读)
+                        /home/nfs/rw 192.168.127.0/24(rw,sync,no_subtree_check,no_root_squash)
+                        /home/nfs/ro 192.168.127.0/24(ro,sync,no_subtree_check,no_root_squash)
+                    4、重新加载
+                        sudo exportfs -f
+                        sudo systemctl restart nfs-server
+                    5、在其他节点上，测试下
+                        sudo mkdir /mnt/nfs/rw
+                        sudo mount -t nfs 192.168.127.151:/home/nfs/rw /mnt/nfs/rw
+                        sudo mkdir /mnt/nfs/ro
+                        sudo mount -t nfs 192.168.127.151:/home/nfs/ro /mnt/nfs/ro
+                
+                pv-pvc: k8s中统一的持久化存储方案
+                    pv(PersistentVolume) 持久卷，有Pod生命周期的存储卷         
+                    pvc(PersistentVolumeClaim) 持久卷申领
+    **常用创建命令**
+        volumes一般都是依附在负载yaml文件种的配合使用的
+            声明 spec.volumes[](hostPath/emptyDir/persistentVolumeClaim)
+            使用 spec.containers[].volumeMounts(mountPath(容器内的路径)和name(与上面的声明中 name字段保持一致)配合使用)
+        
+            pv-pvc静态构建(集群管理员预先创建的)/动态构建(当集群内的pv不满足pvc的要求时,集群根据pvc通过操作StorageClass来构建)
+            
+            为了更方便的使用pv-pvc，是需要了解StorageClass的，动态制备PV(Provisioner制备器)
+
+    **元素说明**
+        详见 k8s/xxx/yaml/store
+        
+        k8s/xxx/yaml/store/vloumes 数据卷
+            hotsPath/
+                volume-test-pd.yaml hostPath:将节点种的目录挂载到容器内,实现容器与主机共享目录,类似mount操作
+            emptyDir/
+                empty-dir-pd.yaml emptyDir:临时存在的，为一个Pod种多个容器的共享存储使用
+            nfs/
+                nfs-test-pd.yaml nfs: nfs文件服务器的目录挂载，实现多个Pod的数据共享
+        
+        k8s/xxx/yaml/store/pv-pvc 
+            静态PV(需要自己先创建好PV，然后在使用的pod中声明pvc来使用)
+            pv-nfs.yaml 创建好后，可以使用kubectl get pv 查看STATUS状态
+                        Available：空闲，未被绑定
+                        Bound：已经被 PVC 绑定
+                        Released：PVC 被删除，资源已回收，但是 PV 未被重新使用
+                        Failed：自动回收失败
+            pvc-test.yaml 单独的pvc文件，一般不这么用。正常情况下都是与使用它的Pod在一个文件(就是pvc-test.yaml和pvc-test-pd.yaml的内容在一个yaml中)
+                          测试这个pvc的使用是用的同目录下的 pvc-test-pd.yaml
+                注意pv在绑定情况下，要删除就很麻烦，需要按顺序删除使用它的pod、pvc
+
+            动态PV(里面的层次关系是下面的依赖上面的，使用的pod声明了SC，SC找自己的制备器，制备器是一个Pod的容器(有角色权限的))
+            nfs-provisioner-rbac.yaml 制备器角色权限控制，
+            nfs-provisioner-deployment.yaml 制备器,运行了一个容器(需要和k8s的版本相适应),里面的内容不用大动，就需要按自己的实际情况修改，nfs服务器的地址和目录
+            nfs-storage-class.yaml SC 使用制备器
+            nfs-sc-demo-statefulset.yaml 要使用的Pod 里面与动态制备相关的就是 39行开始的 volumeClaimTemplates
+            auto-pv-test-pvc.yaml 是测试动态PV创建PVC的，在有了SC后，可以使用。
+                动态PV就是在PVC和PV间加了SC和制备器,完成动态制备。
+                    nfs-provisioner-rbac.yaml、nfs-provisioner-deployment.yaml、nfs-storage-class.yaml
+                    三个文件依次建立，顺序支撑完成了SC的操作，SC向Pod提供了动态PV的能力
+
+
+#### 2.5.5、高级调度相关(CronJob/InitContainer初始化容器/taint污点和toleration容忍/affinity亲和力)
+
+---
+    定时任务
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/cron-jobs/
+    初始化容器
+    https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/init-containers/
+    调度
+    https://kubernetes.io/zh-cn/docs/concepts/scheduling-eviction/
+    **说明**
+        除了定时任务和初始化容器外，都是控制Pod到哪个节点的。
+        
+        定时任务和linux系统的定时任务一样，
+            linux定时任务：在命令行输入 crontab -e 进入定时任务编辑
+                            * * * * * * XXX (分 时 天 日 月 周 XXX 动作)
+            
     **常用创建命令**
     **元素说明**
+        详见 k8s/xxx/yaml/schedule
+        cronjob/cron-job.pd.yaml 定时启动一个Pod,在busybox环境下，没分钟都执行 date; echo Hello from the Kubernetes cluster
+                                    创建好定时任务后，使用kubectl get cj 查看LAST_SCHEDULE字段，看上次调用时间
+        InitContainer/nginx-deploy-initc.yaml InitC、探针、PreStop三者分别对一个Pod内的业务容器在启动前、启动中、结束前的三个重要的声明周期内做操作
+                                    例子中的有数据卷声明，初始化容器是把百度的主页下载到数据卷中，然后再启动业务容器
+        taint_toleration/ 作用(污点)和反作用(容忍)
+            https://kubernetes.io/zh-cn/docs/concepts/scheduling-eviction/taint-and-toleration/
+            污点是打给节点的
+                命令行给节点打污点：kubectl taint nodes node1 key1=value1:NoSchedule
+                大白话就是 这个节点要是key1是value1的情况下，就不要调度，或者驱逐
+            容忍度就是给Pod的
+                和containers是同一层级的，如deployment中在spec.template.spec.tolerations
+                key # 节点污点的键名
+                operator # 默认是Equal，还有一个值是Exists
+                value # 在operator是Exists的情况下，出现 节点对应建的值
+                effect  # PreferNoSchedule NoSchedule或者 NoExecute
+            视频中有教程，但是资料是没找到相关的yaml文件
+        affinity/
+            https://kubernetes.io/zh-cn/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+            NodeAffinity/
+                用命令行将node打上标签
+                nginx-affinity-deploy.yaml 部署的时候，因为亲和力的原因，总是要部署到linux上，然后尽量的按权重调度上打标签label-2=key-2的节点上
+            nodeAffinity使Pod尽可能靠近或者远离一个节点上运行，比nodeSelector更为细致
+            
+            PodAffinity/
+                podAffinity使Pod部署尽可能的靠近或者远离已经存在的Pod的节点上
+                和node亲和性需要在node上打标签一样，Pod亲和性也要有条件，就是
+                Pod 反亲和性需要节点上存在一致性的标签。换言之， 集群中每个节点都必须拥有与 topologyKey 匹配的标签。 
+                如果某些或者所有节点上不存在所指定的 topologyKey 标签，调度行为可能与预期的不同
+                    s1-nginx-deploy-affinity.yaml 部署好
+                    s2-nginx-deploy-affinity.yaml 部署好
+                    nginx-affinity-deploy.yaml 部署的时候，因为亲和力的原因，总是尽力和s1一起，然后才是和s2一起
+        
 
-#### 2.5.5、策略(LimitRange/NetworkPolicy/ResourceQuota)
+#### 2.5.6、访问控制
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/policy/
@@ -825,3 +973,12 @@ helm search repo xxx (xxx为包名)
     用加密数据存储配置信息
     **常用创建命令**
     **元素说明**
+
+
+### 3、分布式容器技术(Docker/K8S)小结
+
+    Docker是解决单体应用的环境适应问题，从历史的角度上，从主机部署到虚拟机部署、再到容器化部署，
+    将交付方式从 单体安装包交付 转向了 适用性更好的容器化交付。
+    分布式系统，提高系统的高可用性，基于多主机集群的硬件，出现了基于容器技术的k8s管理器，它是服务器运维方式的高度结晶。
+    学好了Docker和K8S,在软件行业应该是增加了横向竞争力(即，能够适应多种不同业务类型的系统开发)
+    如果算法好，那就是软件行业增加纵向竞争力(即，对某一特定业务的系统，有更高更好的开发能力)
