@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: managed-nfs-storage
+provisioner: fuseim.pri/ifs #制备器名称，必须存在的制备器保持一致
+parameters:
+  archiveOnDelete: "false" #十分存档
+reclaimPolicy: Retain #回收策略
+volumeBindingMode: Immediate #绑定模式
