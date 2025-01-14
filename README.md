@@ -1069,11 +1069,75 @@
             # 查看是否还有国外镜像
 
             grep "image: " * -r
-            安装好后，要是服务器配置较低的话，会出现网页打开不了的情况，升级服务器配置就行了(这里就说明了，容器技术只是为了增加应用的适应性，关键还是得看硬件配置)
+            安装好后，要是服务器配置较低的话，会出现grafana.wolfcode.cn网页打开不了的情况!!!
 
 #### 2.7 日志管理
 
     ELK
+
+    Kibana          https://www.elastic.co/cn/kibana 数据可视化模组，TS语言编写
+    Elasticsearch   https://www.elastic.co/cn/enterprise-search 文档数据库，专注搜索场景，数据库格式
+    Logstash        https://www.elastic.co/cn/logstash 数据收集/清洗工具，java语言编写
+    Filebeat        https://www.elastic.co/cn/beats/filebeat 是一款轻量的数据收集工具,go语言编写的
+
+    1、Filebeat监听日志文件，然后发送给Logstash，如果Logstash消费不过来，可以增加消息中间件比如Kafka
+    2、Logstash进行数据收集/清洗，然后发送给Elasticsearch
+    3、Kibana负责数据展示，检索/图表展示
+
+    k8s/1.23.6/elk是安装相关文件
+    namespace.yaml 命名空间 kube-logging
+    es.yaml es服务
+    logstash.yaml logstash服务
+    filebeat.yaml filebeat服务
+    kibana.yaml kibana服务
+    
+    
+    
+    ELK安装(4个组件的版本一定完全一致)
+    0、新建命名空间 kubectl apply -f namespace.yaml
+    1、部署es服务 kubectl apply -f es.yaml (因为文件中有node选择器，需要给node打标签 kubectl label nodes k8s-node1 es=data)
+    2、部署logstash服务 kubectl apply -f logstash.yaml
+
+    kibana还是网页打不开！！！
+
+#### 2.8 可视化界面
+
+    Kubernetes:Dashboard    k8s自家的
+    kubesphere              https://kubesphere.io/zh/ 青云科技开发的
+    kuboard                 https://www.kuboard.cn/ 
+
+    k8s/1.3.6/UI/
+    kubesphere 参考文档 https://kubesphere.io/zh/docs/v3.3/quick-start/minimal-kubesphere-on-k8s/
+    版本 3.3.1
+    安装步骤
+    1、创建本地动态存储PVC(在每个节点上都安装)
+    # 在所有节点安装 iSCSI 协议客户端（OpenEBS 需要该协议提供存储支持）
+    sudo apt install ebtables socat ipset conntrack
+    # 设置开机启动
+    sudo systemctl enable iscsid.service
+    # 启动服务
+    sudo systemctl start iscsid.service
+    # 查看服务状态
+    sudo systemctl status iscsid
+    
+    2、安装 OpenEBS 
+    kubectl apply -f https://openebs.github.io/charts/openebs-operator.yaml
+    
+    # 查看状态（下载镜像可能需要一些时间）
+    kubectl get all -n openebs
+    
+    3、 在主节点创建本地 storage class
+    kubectl apply -f default-storage-class.yaml
+
+    4、 安装kubesphere
+    kubectl apply -f kubesphere-installer.yaml
+    kubectl apply -f cluster-configuration.yaml
+    # 检查安装日志
+    kubectl logs -n kubesphere-system $(kubectl get pod -n kubesphere-system -l 'app in (ks-install, ks-installer)' -o jsonpath='{.items[0].metadata.name}') -f
+    # 查看端口
+    kubectl get svc/ks-console -n kubesphere-system # 默认端口是 30880，如果是云服务商，或开启了防火墙，记得要开放该端口
+    
+    # 登录控制台访问，账号密码：admin/P@88w0rd
 
 
 ### 3、分布式容器技术(Docker/K8S)小结
