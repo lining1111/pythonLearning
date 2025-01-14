@@ -188,6 +188,17 @@
     其实k8s更好的体现了，在大型的高可用系统中，从单一微服务用容器的方式实现(增加微服务的系统环境适应力)到各个微服务间的组合形成更大型的服务。
     可以体会到，容器化的微服务群，有助于系统功能的解耦、迁移。只要保证好各个微服务版本间的兼容就好了。
 
+    第2章节k8s的学习，主要分为以下几个步骤：
+    1、安装k8s集群，1master-2node
+    2、学习k8s的大框架及重要组件
+    3、学习kubectl命令，因为k8s的操作主要是通过kubectl命令结合yaml文件向apiServer来发送请求，操作k8s
+    4、通过kubectl结合yaml学习k8s的七种资源类型的创建及操作。
+    5、有了3、4的基础，学习更为方便的helm包管理器的使用
+    6、k8s集群监控方案
+    7、k8s集群日志方案
+    8、k8s可视化运维管理平台
+    9、微服务DevOps实战
+
 #### 2.1、搭建k8s集群
     k8s集群包含两部分，主控节点Master和工作节点Node
 ---
@@ -456,28 +467,7 @@
     
     kubectl get deploy xxx -o=yaml --export > yyy.yaml (xxx为已存在的编排，yyy为自定义名称)
 
-#### 2.4、Helm
-
-https://helm.sh/zh/
-helm的版本应该和k8s的版本相适应 详见 https://helm.sh/zh/docs/topics/version_skew/
-安装参考 https://helm.sh/zh/docs/intro/install/
-在 https://github.com/helm/helm/releases/tag/v3.10.0 下载 linux/amd64版本的安装包
-将压缩包解压后，将执行文件拷贝到/usr/local/bin目录下
-
-
-版本 3.10.2(k8s-1.23.6)
-版本 3.0.0(k8s-1.18.0)
-
-添加chart仓库
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm repo add stable http://mirror.azure.cn/kubernetes/charts
-helm repo add aliyun https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
-helm repo update
-搜索可用的
-helm search repo xxx (xxx为包名)
-
-
-#### 2.5、资源类型
+#### 2.4、资源类型
     
     k8s是专业的运维工具，如果是开发的角色，要了解或者加强自己的运维能力，那么可以有选择了学习，只要达到自己的运维目的即可。
     linux是一个庞大且复杂的系统，因为开源的原因，世界上很多智力超群的人对它最了贡献，个人在linux系统学习中切记不要把自己逼得要做很精的样子，
@@ -562,7 +552,7 @@ helm search repo xxx (xxx为包名)
       └─ClusterRoleBinding      ---集群角色与账号绑定
 
 
-#### 2.5.1、工作负载 Pod/Deployment/StatefulSet/DaemonSet/Job/CronJob
+#### 2.4.1、工作负载 Pod/Deployment/StatefulSet/DaemonSet/Job/CronJob
 **这里应该以分布式的服务提供者角度来看，是执行具体业务的容器，任何一个类型的都必然存在一个image(执行特点任务的)**
 
     ---1、无状态服务：认为Pod都是相同的，没有顺序要求，不用考虑在哪个node上运行，随意进行伸缩和扩展
@@ -587,7 +577,7 @@ helm search repo xxx (xxx为包名)
 
     HPA 自动扩容缩容 https://kubernetes.io/zh-cn/docs/concepts/workloads/autoscaling/
 
-##### 2.5.1.1、Pod
+##### 2.4.1.1、Pod
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/pods/
@@ -615,7 +605,7 @@ helm search repo xxx (xxx为包名)
 
 **但是因为原生Pod的扩容/升级很不方便，所以出现了按业务类型分类管理的Deployment/StatefulSet/DaemonSet/Job/CronJob**
 
-##### 2.5.1.2、Deployment
+##### 2.4.1.2、Deployment
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/deployment/
@@ -629,7 +619,7 @@ helm search repo xxx (xxx为包名)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/deployment
 
-##### 2.5.1.3、StatefulSet
+##### 2.4.1.3、StatefulSet
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/statefulset/
@@ -649,7 +639,7 @@ helm search repo xxx (xxx为包名)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/statefulset
 
-##### 2.5.1.4、DaemonSet
+##### 2.4.1.4、DaemonSet
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/daemonset/
@@ -662,7 +652,7 @@ helm search repo xxx (xxx为包名)
          kubectl xxx ds (xxx 表示操作类型，一般用文件创建 delete get set describe)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/daemonset
-##### 2.5.1.5、Job
+##### 2.4.1.5、Job
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/job/
@@ -672,7 +662,7 @@ helm search repo xxx (xxx为包名)
         kubectl xxx job (xxx 表示操作类型，create delete get set describe)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/jobs
-##### 2.5.1.6、CronJob
+##### 2.4.1.6、CronJob
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/workloads/controllers/cron-jobs/
@@ -683,7 +673,7 @@ helm search repo xxx (xxx为包名)
     **元素说明**
         详见 k8s/xxx/yaml/workfloads/jobs
 
-#### 2.5.2、网络服务、负载均衡 Service/Endpoints/Ingress
+#### 2.4.2、网络服务、负载均衡 Service/Endpoints/Ingress
 **这里应该是路由表的角度来看，iptables，endpoints**    
 
     Service是容器内部通信
@@ -691,7 +681,7 @@ helm search repo xxx (xxx为包名)
     Ingress是容器对外提供服务
         
 
-##### 2.5.2.1、Service
+##### 2.4.2.1、Service
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/service/
@@ -730,7 +720,7 @@ helm search repo xxx (xxx为包名)
             k8s/xxx/yaml/network/services/ClusterIP
 
 
-##### 2.5.2.1、Ingress
+##### 2.4.2.1、Ingress
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/services-networking/ingress/
@@ -792,7 +782,7 @@ helm search repo xxx (xxx为包名)
         Exact
             k8s/xxx/yaml/network/ingress/Exact
 
-#### 2.5.3、配置(ConfigMap/Secret)
+#### 2.4.3、配置(ConfigMap/Secret)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/configuration/configmap/ 明文
@@ -844,7 +834,7 @@ helm search repo xxx (xxx为包名)
             先用 kubectl create secret docker-registry harbor-secret 后面跟指定格式的参数，来创建配置
             然后 使用private-image-pull-pod.yaml 来测试拉取指定地址的docker镜像
 
-#### 2.5.4、持久化存储(Volume/NFS挂载/PV-PVC)
+#### 2.4.4、持久化存储(Volume/NFS挂载/PV-PVC)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/
@@ -920,7 +910,7 @@ helm search repo xxx (xxx为包名)
                     三个文件依次建立，顺序支撑完成了SC的操作，SC向Pod提供了动态PV的能力
 
 
-#### 2.5.5、高级调度相关(CronJob/InitContainer初始化容器/taint污点和toleration容忍/affinity亲和力)
+#### 2.4.5、高级调度相关(CronJob/InitContainer初始化容器/taint污点和toleration容忍/affinity亲和力)
 
 ---
     定时任务
@@ -972,7 +962,7 @@ helm search repo xxx (xxx为包名)
                     nginx-affinity-deploy.yaml 部署的时候，因为亲和力的原因，总是尽力和s1一起，然后才是和s2一起
         
 
-#### 2.5.6、访问控制(ServiceAccount)
+#### 2.4.6、访问控制(ServiceAccount)
 
 ---
     https://kubernetes.io/zh-cn/docs/concepts/security/
@@ -988,6 +978,102 @@ helm search repo xxx (xxx为包名)
     **常用创建命令**
     **元素说明**
         视频是用ingress-nginx来讲解的，因为是专业运维的范畴，制作CI/CD就不用那么深入了
+
+#### 2.5、Helm
+
+    k8s的包管理器
+    https://helm.sh/zh/
+    helm的版本应该和k8s的版本相适应 详见 https://helm.sh/zh/docs/topics/version_skew/
+    版本 3.10.2(k8s-1.23.6)
+    版本 3.0.0(k8s-1.18.0)
+
+    安装参考 https://helm.sh/zh/docs/intro/install/
+    在 https://github.com/helm/helm/releases/tag/v3.10.0 下载 linux/amd64版本的安装包
+    将压缩包解压后，将执行文件拷贝到/usr/local/bin目录下
+
+    添加chart仓库
+    helm repo add bitnami https://charts.bitnami.com/bitnami
+    helm repo add stable http://mirror.azure.cn/kubernetes/charts
+    helm repo add aliyun https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+    helm repo update
+    搜索可用的
+    helm search repo xxx (xxx为包名)
+    
+    helm中有3个核心概念
+    1、chart     创建k8s应用所必需的一组信息
+    2、config    包含了可以合并到打包的chart中的配置信息，用于创建一个可发布的对象
+    3、release   是一个与特定配置相结合的chart的运行实例
+
+    helm一个包的目录结构
+    mychart
+    ├── Chart.yaml
+    ├── charts # 该目录保存其他依赖的 chart（子 chart）
+    ├── templates # chart 配置模板，用于渲染最终的 Kubernetes YAML 文件
+    │   ├── NOTES.txt # 用户运行 helm install 时候的提示信息
+    │   ├── _helpers.tpl # 用于创建模板时的帮助类
+    │   ├── deployment.yaml # Kubernetes deployment 配置
+    │   ├── ingress.yaml # Kubernetes ingress 配置
+    │   ├── service.yaml # Kubernetes service 配置
+    │   ├── serviceaccount.yaml # Kubernetes serviceaccount 配置
+    │   └── tests
+    │       └── test-connection.yaml
+    └── values.yaml # 定义 chart 模板中的自定义配置的默认值，可以在执行 helm install 或 helm update 的时候覆盖
+
+    
+    k8s/1.23.6/helm/目录下有helm的安装包，helm的学习也在此目录下进行
+    除了命令行搜索可用的安装包外，还可以在 https://artifacthub.io/ 网页中搜索 ,需要特别注意的是，helm包的chart版本要看它的说明，它依赖的helm版本和k8s版本
+
+    k8s/1.23.6/helm/redis/
+    helm pull bitnami/redis 下载安装包
+    通过修改 values.yaml中的信息，来得到自己想要的
+
+    可以基于chart完成升级/回滚操作
+
+#### 2.6 集群监控
+    
+    主流的监控方案:Prometheus
+    官网 https://prometheus.io/docs/introduction/overview/
+    入门 https://prometheus.ac.cn/docs/prometheus/latest/getting_started/
+    
+    Prometheus很强大，但是界面UI简陋，配合Grafana来做显示
+    Grafana 界面丰富，还有一些预制好的。
+架构
+![Prometheus](images/Prometheus.png)
+
+
+    Prometheus使用
+
+    自定义配置安装(复杂，初学不建议)
+        k8s/1.23.6/prometheus 是通过自定义配置进行安装的东西，很复杂，初学阶段不建议使用
+    
+        有了这个文件夹，可以在文件夹的同目录下，执行
+        kubectl apply -f prometheus/ 安装
+        kubectl delete -f prometheus/ 删除
+
+    kube-prometheus 安装
+        推荐使用 kube-prometheus 比较简单(能够快速使用)
+        https://github.com/prometheus-operator/kube-prometheus
+        **部署的时候，一定要注意README文档中Compatibility部分的版本适配情况**
+        1、k8s-1.23.6本次实验使用的是0.10.0版本的
+        2、下载好的包，是需要替换镜像的，将镜像替换为国内镜像(文件夹内的是修改好的)
+            在manifests文件夹下
+            sed -i 's/quay.io/quay.mirrors.ustc.edu.cn/g' prometheusOperator-deployment.yaml
+            sed -i 's/quay.io/quay.mirrors.ustc.edu.cn/g' prometheus-prometheus.yaml
+            sed -i 's/quay.io/quay.mirrors.ustc.edu.cn/g' alertmanager-alertmanager.yaml
+            sed -i 's/quay.io/quay.mirrors.ustc.edu.cn/g' kubeStateMetrics-deployment.yaml
+            sed -i 's/k8s.gcr.io/lank8s.cn/g' kubeStateMetrics-deployment.yaml
+            sed -i 's/quay.io/quay.mirrors.ustc.edu.cn/g' nodeExporter-daemonset.yaml
+            sed -i 's/quay.io/quay.mirrors.ustc.edu.cn/g' prometheusAdapter-deployment.yaml
+            sed -i 's/k8s.gcr.io/lank8s.cn/g' prometheusAdapter-deployment.yaml
+            
+            # 查看是否还有国外镜像
+
+            grep "image: " * -r
+            安装好后，要是服务器配置较低的话，会出现网页打开不了的情况，升级服务器配置就行了(这里就说明了，容器技术只是为了增加应用的适应性，关键还是得看硬件配置)
+
+#### 2.7 日志管理
+
+    ELK
 
 
 ### 3、分布式容器技术(Docker/K8S)小结
