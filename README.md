@@ -199,6 +199,12 @@
     8、k8s可视化运维管理平台
     9、微服务DevOps实战
 
+    6\7\8都是非常消耗硬件资源的，从微服务的角度来看就是，这些涉及了go、java、js等技术串联起来做监控、日志、ui管理。
+    但是懂了1-5的知识，就可以利用k8s的这套分布式部署方案，来做自己的分布式的业务系统，如果是资源紧张的硬件上比如树莓派，可以使用k3s。
+    总之这种服务间相互合作、并能通过一定手段进行微服务治理的技术，是一个成熟开发兼运维人员所要具备的基本素养。
+    
+
+
 #### 2.1、搭建k8s集群
     k8s集群包含两部分，主控节点Master和工作节点Node
 ---
@@ -393,6 +399,9 @@
 ![k8s](images/k8s.png)
 
 #### 2.3、k8s命令行工具 kubectl
+
+    在kubectl是通过向apiServer发送restful指令，来完成对k8s集群的操作的特性，
+    会使用kubectl命令行来查看微服务的异常，比如 describe node xxx 来看Pod的Event
 
 ---
     https://kubernetes.io/zh-cn/docs/reference/kubectl/
@@ -1138,7 +1147,9 @@
     kubectl get svc/ks-console -n kubesphere-system # 默认端口是 30880，如果是云服务商，或开启了防火墙，记得要开放该端口
     
     # 登录控制台访问，账号密码：admin/P@88w0rd
-
+    
+    注意kubesphere是非常消耗资源的，可以根据下面的网站说明，按自己的硬件配置来进行开启或者关闭
+    https://kubesphere.io/zh/docs/v3.3/pluggable-components/overview/
 
 ### 3、分布式容器技术(Docker/K8S)小结
 
@@ -1147,3 +1158,18 @@
     分布式系统，提高系统的高可用性，基于多主机集群的硬件，出现了基于容器技术的k8s管理器，它是服务器运维方式的高度结晶。
     学好了Docker和K8S,在软件行业应该是增加了横向竞争力(即，能够适应多种不同业务类型的系统开发)
     如果算法好，那就是软件行业增加纵向竞争力(即，对某一特定业务的系统，有更高更好的开发能力)
+
+    docker学习的关键点Dockerfile制作和DockerCompose文件制作。
+    Dockerfile注意以下5点：
+    1、FROM、WORKDIR、RUN、COPY单体容器从基础容器通过安装必要软件，包括业务程序。
+    2、ENV环境变量设置
+    3、VOLUME存储挂载
+    4、EXPOSE端口映射
+    5、CMD 应用启动命令
+    DockerCompose注意以下6点:
+    1、build从Dockerfile制作镜像
+    2、ports端口映射
+    3、volumes存储挂载
+    4、networks 要加入的网络
+    5、environment/env_file 环境变量
+    6、links/depends_on 与其他服务的关联关系
