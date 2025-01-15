@@ -50,7 +50,7 @@
     kube-scheduler          10251
     kubelet                 10250
     kube-proxy              10249
-
+    
     随着系统的功能增加，服务会越来越多，监听的端口也会越来越多，为了系统的稳定性，一般而言会有国际惯例来约定端口资源，
     也会利用容器技术将系统进行软隔离。
     学习大型的系统，可以分析其态势，了解它们使用的框架信息，比如编程语言、日志系统、通信机制等等。
@@ -114,7 +114,7 @@
     Dockerfile是用文件(脚本文件)的形式，将一个原始开源的基础镜像，改造成包含自己编写的应用的镜像。
     Docker compose 是用文件的形式(yaml文件)替代长串的docker镜像启动成容器的命令行
     经过Dockerfile和Docker compose后，会在系统中有容器存在，后面就可以对容器进行启动、停止、删除等操作。
-
+    
     类似gitlab对比github一样，harbor对比docker hub来管理docker镜像   https://github.com/goharbor/harbor
 #### Dockerfile
     可以用docker的方式将单一容器内的服务进行组织，编写成一个自己的镜像
@@ -123,7 +123,7 @@
     3、将镜像内的应用的基础依赖如库、环境变量设置好
     4、用EXPOSE、VOLUME等关键词标注下
     5、设置程序的自启动，如CMD (CMD ["executable","param1","param2"]),或者systemd的服务
-
+    
     下面是一个简单的Dockerfile文件写法
     FROM ubuntu:latest
     LABEL authors="lining"
@@ -187,7 +187,7 @@
     要体会的要义多，但是和docker一样，要先理解这个是干什么的，有着怎么样的架构，微服务组件间是怎么通信工作的就好了。
     其实k8s更好的体现了，在大型的高可用系统中，从单一微服务用容器的方式实现(增加微服务的系统环境适应力)到各个微服务间的组合形成更大型的服务。
     可以体会到，容器化的微服务群，有助于系统功能的解耦、迁移。只要保证好各个微服务版本间的兼容就好了。
-
+    
     第2章节k8s的学习，主要分为以下几个步骤：
     1、安装k8s集群，1master-2node
     2、学习k8s的大框架及重要组件
@@ -198,12 +198,12 @@
     7、k8s集群日志方案
     8、k8s可视化运维管理平台
     9、微服务DevOps实战
-
+    
     6\7\8都是非常消耗硬件资源的，从微服务的角度来看就是，这些涉及了go、java、js等技术串联起来做监控、日志、ui管理。
     但是懂了1-5的知识，就可以利用k8s的这套分布式部署方案，来做自己的分布式的业务系统，如果是资源紧张的硬件上比如树莓派，可以使用k3s。
+    k3s官网       https://k3s.io/
+    k3s使用说明     https://docs.k3s.com.cn/
     总之这种服务间相互合作、并能通过一定手段进行微服务治理的技术，是一个成熟开发兼运维人员所要具备的基本素养。
-    
-
 
 #### 2.1、搭建k8s集群
     k8s集群包含两部分，主控节点Master和工作节点Node
@@ -216,7 +216,7 @@
     这里有两个版本的k8s
     一个对应1.18.0版本的(docker-ce~19.03.10)
     一个对应1.23.6版本的(docker-ce~20.10.18)
---- 
+---
     软件说明:
     win上建立虚拟机软件 Vmware17.6.2
     虚拟机系统 ubuntu20.04-server
@@ -254,7 +254,7 @@
         # Step 4: 更新并安装Docker-CE(指定版本的，因为docker的版本应该和k8s相适应)
         sudo apt-get -y update
         sudo apt-get -y install docker-ce=5:20.10.18~3-0~ubuntu-focal
-
+    
     将当前用户添加到docker组
     sudo usermod -aG docker $USER（替换$USER为你的用户名）
     重启系统使上面添加docker用户的行为生效
@@ -280,15 +280,15 @@
     同时编辑/etc/fstab文件，将swap行注释掉
     添加k8s的安装地址
     curl -s https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add -
-
+    
     在/etc/apt/sources.list.d/kubernetes.list 添加 deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
-
+    
     sudo apt update
     1.18.0版本
     sudo apt install -y kubelet=1.18.0-00 kubeadm=1.18.0-00 kubectl=1.18.0-00
     或者 1.23.6版本 
     sudo apt install -y kubelet=1.23.6-00 kubeadm=1.23.6-00 kubectl=1.23.6-00
-
+    
     sudo apt-mark hold kubelet kubeadm kubectl (标记一个包为held back状态，阻止该包自动安装、更新和删除)
     添加命令补全
     在 /etc/bash.bashrc文件中最后一行添加
@@ -312,13 +312,13 @@
       --kubernetes-version v1.23.6 \
       --service-cidr=10.96.0.0/12 \
       --pod-network-cidr=10.244.0.0/16
-
+    
     执行成功后，在master中执行docker images 会有
 ![k8s-master](images/k8s-master.png)
 
     默认token有效期为24小时，当过期之后，该token就不可用了。这时就需要重新创建token(永久期限)，操作如下：
     kubeadm token create --print-join-command --ttl=0
-
+    
     使用kubectl工具：
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -327,16 +327,16 @@
 ##### 2.1.5、在node节点上加入master
     kubeadm join 192.168.127.250:6443 --token qwfasm.n7hx820fmlu1cqnw \
         --discovery-token-ca-cert-hash sha256:9d7c74156cbfeee22bfd402a115ba3bb3ce82bd9d73e382f32414296d03bcf60
-
+    
     如果忘记上面的，可以再master上执行
     kubeadm token create 没有加参数时，可以通过下面的命令查看加入要写的参数值
     kubeadm token list 查看token，得到值后，输入
     openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
-    
+
 
 ##### 2.1.6、master部署 CNI
     **无论哪个都是要和k8s的版本做适应的，推荐使用calico**
-
+    
     ---使用 kubectl 部署 flannel
     wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
     kubectl apply -f kube-flannel.yml
@@ -348,7 +348,7 @@
     这里有个小知识，一个整个的yaml其实很庞大，
     一般就需要注意两个方面，一个是apiVersion，一个是image。可以使用命令
     grep xxx yyy.yaml 来过滤信息查看
-
+    
     kubectl get nodes
 
 ##### 2.1.7、测试
@@ -356,7 +356,7 @@
     kubectl create deployment nginx --image=nginx
     kubectl expose deployment nginx --port=80 --type=NodePort
     kubectl get pod,svc -o wide (以后尽量加 -o wide可以看到运行的节点)
-
+    
     此时就可以在master和node的任意的ip 加上容器内80映射到节点的端口号来访问nginx了    
     
     测试完毕，删除 nginx
@@ -372,9 +372,9 @@
     
     在k8s和docker安装完毕后，从4步开始 所有操作有问题后，都有一个类型重启k8s环境的操作
     sudo kubeadm reset -f
-
-    如果想在node节点执行kubectl的命令，由于api-server是运行在master节点上的，所以需要让node节点知道这个命令是向谁请求
     
+    如果想在node节点执行kubectl的命令，由于api-server是运行在master节点上的，所以需要让node节点知道这个命令是向谁请求
+
 
 #### 2.2、k8s中各个组件
     理解组件可以从k8s的结构和微服务组合角度来看
@@ -387,14 +387,14 @@
     kube-scheduler (调度器，负责将Pod基于一定的算法(资源要求、亲和性等)，将其调用到更合适的节点(服务器)上)
     etcd (键值类型的分布式存储系统，用于保存集群相关的数据，类似k8s的数据库)
     container runtime (docker 容器化工具)
-
+    
     ---node上有(一般不用特别关注)
     kubelet (主控节点派到工作节点的代表，负责Pod的声明周期、存储、网络)
     kube-proxy (提供网络代理，负载均衡等操作，4层负载)
     container runtime (docker 容器化工具)
     
     ---还有一些附加组件如 ingress dashboard等
-
+    
     k8s节点内组件关系图
 ![k8s](images/k8s.png)
 
@@ -406,19 +406,19 @@
 ---
     https://kubernetes.io/zh-cn/docs/reference/kubectl/
     弃用api的说明 https://kubernetes.io/zh-cn/docs/reference/using-api/deprecation-guide/
-
+    
     语法格式
     kubectl [command] [TYPE] [NAME] [flags]
-
+    
     command:对资源进行的操作
     TYPE:资源类型 大小写敏感
     NAME:资源名称 大小写敏感，
     flags:可选参数 大小写敏感
-
+    
     **与kubectl命令行工具相对的，有一些web类型的可视化界面(注意k8s版本适配)**，如
     Dashboard(https://github.com/kubernetes/dashboard)
     kuBoard(https://www.kuboard.cn/)
-
+    
     kubectl 是通过yaml文件形成http请求，向restful api风格接口的ApiServer发送请求
     (apiVersion 可以通过 kubectl api-versions查询，kind 可以通过 kubectl api-resources查询)
 
@@ -439,9 +439,9 @@
     k8s的资源编排就是编辑若干的类型对象，调用ApiServer来生成各种实例，完成任务
     go的工程就是根据go提供的数据类型和函数体，来组合成结构体，生成各种实例，完成任务
     可编程的本质，就是调用环境的api，来完成特定任务。
-
+    
     通过kubectl命令使用资源编排文件来对大量的资源对象进行编排部署
-
+    
     资源编排yaml文件要记住很痛苦，可以使用 kubectl (help、explain、create --dry-run -o yaml)来帮助自己生成
     也可以IDE中搜索kubernetes拉安装插件
     
@@ -477,7 +477,7 @@
     kubectl get deploy xxx -o=yaml --export > yyy.yaml (xxx为已存在的编排，yyy为自定义名称)
 
 #### 2.4、资源类型
-    
+
     k8s是专业的运维工具，如果是开发的角色，要了解或者加强自己的运维能力，那么可以有选择了学习，只要达到自己的运维目的即可。
     linux是一个庞大且复杂的系统，因为开源的原因，世界上很多智力超群的人对它最了贡献，个人在linux系统学习中切记不要把自己逼得要做很精的样子，
     要明白大部分的事故都是前人遇到并解决了的，找到方案，并正确的使用出来，才是在有限的时间内出产最大成果的方法。
@@ -507,7 +507,7 @@
 **学习方法树说明**
     
     跟着视频章节、加(集群架构)果+(集群操作)因，来学来体会。    
-
+    
     k8s/xxx(版本号(主要是1.23.6))/k8s核心概念详解-上课画图.jpg      是wolfcode基于k8s-1.23.6的课程~结构图，是每个学习章节的集群架构。(出现的效果,果)
     k8s/xxx(版本号(主要是1.23.6))/k8s 入门到微服务项目实战.xmind    是wolfcode基于k8s-1.23.6的课程~yaml及kubectl操作说明，是每个学习章节的操作。(执行的动作，因)
     k8s/xxx(版本号(主要是1.23.6))/yaml/                         是wolfcode基于k8s-1.23.6的每个章节的yaml-demo
@@ -531,12 +531,12 @@
              ├─Prefix                   ---路径类型:以 / 作为分隔符来进行前缀匹配
              ├─Exact                    ---路径类型:精确匹配，URL需要与path完全匹配上，且区分大小写的
              └─ImplementationSpecific   ---路径类型:需要指定 IngressClass，具体匹配规则以 IngressClass 中的规则为准
-
+    
     配置
     config    ---配置。可以实现动态更新的作用
       ├─ConfigMap          ---明文存储的KV值
       └─Secret             ---默认是base64编码的KV值
-
+    
     存储(持久化存储)
     store   ---存储，容器被调度后，内部数据就不存在了。业务都是逻辑类的东西，是需要将数据、日志等存在一个可持久化的地方。       
       └─volumes     ---声明存储的地方，类型有以下4种
@@ -544,14 +544,14 @@
           ├─hostPath    ---主机路径，将工作节点中的目录挂载到Pod中的容器，实现mount的效果。持久化的
           ├─nfs         ---nfs存储服务器挂载，实现不同节点上存储的挂载，持久化的
           └─pv-pvc      ---k8s中最常用的一种持久化存储方式，有静态和动态两种形式。
-
+    
     高级调度相关 (如果这种高级调度学不会，就用基础的label/selector)
     schedule    ---调度相关，除了定时任务和初始化容器外，都是控制Pod去哪个节点的
       ├─cronjob         ---定时任务 定时启动一个Pod来执行一个简短的任务
       ├─InitContainer   ---初始化容器 是一种特殊的容器，在一个Pod内的应用容器启动前运行的
       ├─taint_toleration---污点 使节点能够排斥一类特定的 Pod;容忍 是应用于 Pod 上的。容忍度允许调度器调度带有对应污点的 Pod
       └─affinity        ---亲和力 使Pod尽可能的往一个节点上调度
-
+    
     访问控制(更偏运维的，如果只想到开发角色的CI/CD，到上面的就好了)
     security        --安全控制的，专业运维的范畴
       ├─ServiceAccount          ---服务账号，作用到Pod的
@@ -568,7 +568,7 @@
     ---2、有状态服务：Pod是不一样的，有顺序要求，考虑在哪个node上运行，不可随意伸缩扩展；每个Pod独立，保持Pod的启动顺序和唯一性
     ---3、守护进程:DaemonSet
     ---4、任务:一次性任务Job、定时任务CronJob
-
+    
     根据要控制的服务的特点,分为四大类:适用无状态服务、适用有状态服务、守护进程、任务/定时任务
     包括:
     无状态服务
@@ -583,7 +583,7 @@
     任务/定时任务
     Job 一次性
     Cronjob 周期性
-
+    
     HPA 自动扩容缩容 https://kubernetes.io/zh-cn/docs/concepts/workloads/autoscaling/
 
 ##### 2.4.1.1、Pod
@@ -640,9 +640,9 @@
         灰度发布/金丝雀发布 目的是将项目上线后产生问题的影响，尽量降到最低。
         做法就是先更新整个副本的一小部分，如果确认没问题，就更新全部，有问题，就回滚这一小部分。
         利用 spec.updateStrategy.rollingUpdate.partition字段进行分区更新(倒序的顺序)       
-
+    
         更新策略有OnDelete 当删除时才进行更新(可以达到更新指定的pod)
-
+    
     **常用命令**
         kubectl xxx sts (xxx 表示操作类型，一般用文件创建 delete get set describe)
     **元素说明**
@@ -688,7 +688,7 @@
     Service是容器内部通信
         这里Service体现的就是微服务，基于端口的服务提供，而Pod是分布式的，是藏在Service后面的。
     Ingress是容器对外提供服务
-        
+
 
 ##### 2.4.2.1、Service
 
@@ -801,7 +801,7 @@
         KV类型的配置信息
         Secret
         用加密数据存储配置信息
-
+    
         实现热更新的效果
     **常用创建命令**
          kubectl xxx configmap(或者secret) (xxx 表示操作类型，create delete get set describe)
@@ -819,7 +819,7 @@
             
             application.yml 是基于文件的
             kubectl create configmap spring-boot-test-yaml --from-file=application.yml
-
+    
             命令行直接写参数的
             kubectl create configmap test-key-value-config --from-literal=KEY=VALUE
             kubectl create configmap test-env-config --from-literal=JAVA_OPTS_TEST='-Xms512m -Xmx512m' --from-literal=APP_NAME=my-test
@@ -827,12 +827,12 @@
             nginx.conf 是从运行的nginx容器拷贝出来，
             执行 kubectl create configmap nginx-config-cm --from-file=nginx.conf
             使用 deployent/nginx-deploy.yaml 把数据卷挂载的注释打开后，进行测试(注意subPath解决文件覆盖容器内所有文件的问题)
-
+    
             使用
             (就是在Pod种使用,KV类型的数值，可以用在环境变量，文件路径(卷加载))
             env-test-pod.yaml 是加载环境变量的测试 测试的cm是 test-env-config
             file-test-pod.yaml 是加载文件的，是  kubectl create configmap test-dir-config --from-file=test
-
+    
         Secret
             k8s/xxx/yaml/config/Secret (一般用的较少，因为加密方式是base64，不能算是加密)
             创建
@@ -885,7 +885,7 @@
             pv-pvc静态构建(集群管理员预先创建的)/动态构建(当集群内的pv不满足pvc的要求时,集群根据pvc通过操作StorageClass来构建)
             
             为了更方便的使用pv-pvc，是需要了解StorageClass的，动态制备PV(Provisioner制备器)
-
+    
     **元素说明**
         详见 k8s/xxx/yaml/store
         
@@ -907,7 +907,7 @@
             pvc-test.yaml 单独的pvc文件，一般不这么用。正常情况下都是与使用它的Pod在一个文件(就是pvc-test.yaml和pvc-test-pd.yaml的内容在一个yaml中)
                           测试这个pvc的使用是用的同目录下的 pvc-test-pd.yaml
                 注意pv在绑定情况下，要删除就很麻烦，需要按顺序删除使用它的pod、pvc
-
+    
             动态PV(里面的层次关系是下面的依赖上面的，使用的pod声明了SC，SC找自己的制备器，制备器是一个Pod的容器(有角色权限的))
             nfs-provisioner-rbac.yaml 制备器角色权限控制，
             nfs-provisioner-deployment.yaml 制备器,运行了一个容器(需要和k8s的版本相适应),里面的内容不用大动，就需要按自己的实际情况修改，nfs服务器的地址和目录
@@ -969,7 +969,7 @@
                     s1-nginx-deploy-affinity.yaml 部署好
                     s2-nginx-deploy-affinity.yaml 部署好
                     nginx-affinity-deploy.yaml 部署的时候，因为亲和力的原因，总是尽力和s1一起，然后才是和s2一起
-        
+
 
 #### 2.4.6、访问控制(ServiceAccount)
 
@@ -983,7 +983,7 @@
             
             这部分主要是讲ServiceAccounts，标识服务的身份，同时还有和RBAC做绑定，获取权限
             应用场景：自己写的应用需要通过k8s的接口来获取集群信息时，就需要为运行它的Pod配置账号和相应的权限
-
+    
     **常用创建命令**
     **元素说明**
         视频是用ingress-nginx来讲解的，因为是专业运维的范畴，制作CI/CD就不用那么深入了
@@ -995,11 +995,11 @@
     helm的版本应该和k8s的版本相适应 详见 https://helm.sh/zh/docs/topics/version_skew/
     版本 3.10.2(k8s-1.23.6)
     版本 3.0.0(k8s-1.18.0)
-
+    
     安装参考 https://helm.sh/zh/docs/intro/install/
     在 https://github.com/helm/helm/releases/tag/v3.10.0 下载 linux/amd64版本的安装包
     将压缩包解压后，将执行文件拷贝到/usr/local/bin目录下
-
+    
     添加chart仓库
     helm repo add bitnami https://charts.bitnami.com/bitnami
     helm repo add stable http://mirror.azure.cn/kubernetes/charts
@@ -1012,7 +1012,7 @@
     1、chart     创建k8s应用所必需的一组信息
     2、config    包含了可以合并到打包的chart中的配置信息，用于创建一个可发布的对象
     3、release   是一个与特定配置相结合的chart的运行实例
-
+    
     helm一个包的目录结构
     mychart
     ├── Chart.yaml
@@ -1028,18 +1028,18 @@
     │       └── test-connection.yaml
     └── values.yaml # 定义 chart 模板中的自定义配置的默认值，可以在执行 helm install 或 helm update 的时候覆盖
 
-    
+
     k8s/1.23.6/helm/目录下有helm的安装包，helm的学习也在此目录下进行
     除了命令行搜索可用的安装包外，还可以在 https://artifacthub.io/ 网页中搜索 ,需要特别注意的是，helm包的chart版本要看它的说明，它依赖的helm版本和k8s版本
-
+    
     k8s/1.23.6/helm/redis/
     helm pull bitnami/redis 下载安装包
     通过修改 values.yaml中的信息，来得到自己想要的
-
+    
     可以基于chart完成升级/回滚操作
 
 #### 2.6 集群监控
-    
+
     主流的监控方案:Prometheus
     官网 https://prometheus.io/docs/introduction/overview/
     入门 https://prometheus.ac.cn/docs/prometheus/latest/getting_started/
@@ -1051,14 +1051,14 @@
 
 
     Prometheus使用
-
+    
     自定义配置安装(复杂，初学不建议)
         k8s/1.23.6/prometheus 是通过自定义配置进行安装的东西，很复杂，初学阶段不建议使用
     
         有了这个文件夹，可以在文件夹的同目录下，执行
         kubectl apply -f prometheus/ 安装
         kubectl delete -f prometheus/ 删除
-
+    
     kube-prometheus 安装
         推荐使用 kube-prometheus 比较简单(能够快速使用)
         https://github.com/prometheus-operator/kube-prometheus
@@ -1076,37 +1076,35 @@
             sed -i 's/k8s.gcr.io/lank8s.cn/g' prometheusAdapter-deployment.yaml
             
             # 查看是否还有国外镜像
-
+    
             grep "image: " * -r
             安装好后，要是服务器配置较低的话，会出现grafana.wolfcode.cn网页打开不了的情况!!!
 
 #### 2.7 日志管理
 
     ELK
-
+    
     Kibana          https://www.elastic.co/cn/kibana 数据可视化模组，TS语言编写
     Elasticsearch   https://www.elastic.co/cn/enterprise-search 文档数据库，专注搜索场景，数据库格式
     Logstash        https://www.elastic.co/cn/logstash 数据收集/清洗工具，java语言编写
     Filebeat        https://www.elastic.co/cn/beats/filebeat 是一款轻量的数据收集工具,go语言编写的
-
+    
     1、Filebeat监听日志文件，然后发送给Logstash，如果Logstash消费不过来，可以增加消息中间件比如Kafka
     2、Logstash进行数据收集/清洗，然后发送给Elasticsearch
     3、Kibana负责数据展示，检索/图表展示
-
+    
     k8s/1.23.6/elk是安装相关文件
     namespace.yaml 命名空间 kube-logging
     es.yaml es服务
     logstash.yaml logstash服务
     filebeat.yaml filebeat服务
     kibana.yaml kibana服务
-    
-    
-    
+
     ELK安装(4个组件的版本一定完全一致)
     0、新建命名空间 kubectl apply -f namespace.yaml
     1、部署es服务 kubectl apply -f es.yaml (因为文件中有node选择器，需要给node打标签 kubectl label nodes k8s-node1 es=data)
     2、部署logstash服务 kubectl apply -f logstash.yaml
-
+    
     kibana还是网页打不开！！！
 
 #### 2.8 可视化界面
@@ -1114,7 +1112,7 @@
     Kubernetes:Dashboard    k8s自家的
     kubesphere              https://kubesphere.io/zh/ 青云科技开发的
     kuboard                 https://www.kuboard.cn/ 
-
+    
     k8s/1.3.6/UI/
     kubesphere 参考文档 https://kubesphere.io/zh/docs/v3.3/quick-start/minimal-kubesphere-on-k8s/
     版本 3.3.1
@@ -1137,7 +1135,7 @@
     
     3、 在主节点创建本地 storage class
     kubectl apply -f default-storage-class.yaml
-
+    
     4、 安装kubesphere
     kubectl apply -f kubesphere-installer.yaml
     kubectl apply -f cluster-configuration.yaml
@@ -1158,7 +1156,7 @@
     分布式系统，提高系统的高可用性，基于多主机集群的硬件，出现了基于容器技术的k8s管理器，它是服务器运维方式的高度结晶。
     学好了Docker和K8S,在软件行业应该是增加了横向竞争力(即，能够适应多种不同业务类型的系统开发)
     如果算法好，那就是软件行业增加纵向竞争力(即，对某一特定业务的系统，有更高更好的开发能力)
-
+    
     docker学习的关键点Dockerfile制作和DockerCompose文件制作。
     Dockerfile注意以下5点：
     1、FROM、WORKDIR、RUN、COPY单体容器从基础容器通过安装必要软件，包括业务程序。
