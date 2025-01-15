@@ -107,6 +107,10 @@
 
 ---
 ### 1、docker
+
+    docker能够帮助开发者在轻量级容器中自动部署应用程序，并使得不同容器中的应用程序彼此隔离，高效工作
+    镜像是一个分层存储的只读文件系统
+    
     docker 安装方式参考 https://blog.csdn.net/Stromboli/article/details/142486565
     镜像地址 https://1ms.run/
     官方文档地址 https://docs.docker.com/manuals/
@@ -278,6 +282,14 @@
     永久关闭交换
     sudo swapoff -a
     同时编辑/etc/fstab文件，将swap行注释掉
+
+    将桥接的IPv4流量传递到iptables的链
+    cat > /etc/sysctl.d/k8s.conf << EOF
+    net.bridge.bridge-nf-call-ip6tables = 1
+    net.bridge.bridge-nf-call-iptables = 1
+    EOF
+
+
     添加k8s的安装地址
     curl -s https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | sudo apt-key add -
     
@@ -422,6 +434,28 @@
     kubectl 是通过yaml文件形成http请求，向restful api风格接口的ApiServer发送请求
     (apiVersion 可以通过 kubectl api-versions查询，kind 可以通过 kubectl api-resources查询)
 
+    常用的命令
+    1、查看网络路由情况，因为k8s的资源编排是以命名空间为集群隔离的，
+        同一命名空间的Pod，共享硬件的资源配额还有网络
+        所以在查看k8s虚拟网络连接情况 用 route -n 命令，效果很明显。
+    2、查看节点情况 kubectc get nodes --show-labels    
+        这里是带节点标签的，这对查看此节点的Pod部署异常情况很重要。
+    3、查看有多少命名空间，基本一组Pod是实现某个功能的一组微服务，它们都在同一命名空间，
+        而且在查看网络服务的时候，也要加上命名空间，看这个服务是怎么将这个命名空间的服务端口暴露出去的。
+    4、查看某一命名空间Pod的运行情况，Pod是真正实现业务的负载，同时也是镜像--->容器的实际表现。
+        kubectl get pod -n Namespace -o wide 这里加了 -o wide 可以看到运行到哪个节点。
+    5、Pod运行了业务，就需要有网络和存储情况。
+        5.1、查看网络，就是查看同一命名空间下服务情况
+        kubectl get svc -n 得到想要的服务名 svc-1
+        kubectl descibe svc-1 -n 查看服务的部署情况
+        或者一步到位，通过查看endpoints来查看
+        kubectl get endpoints -n 
+        5.2、查看存储,先查看Pod的实现yaml 
+        kubectl describe pod XXX -n 
+        然后看是否采用了StorageClass，如果用了，输入
+        kubectl describe sc XXX -n
+        **k8s中 用户权限和PV-PVC是一个比较难的点，可以在以后的实际工作中慢慢学习**
+        
 
 ##### 2.3.1、资源管理和编排部署的文件(yaml)
 
@@ -1171,3 +1205,11 @@
     4、networks 要加入的网络
     5、environment/env_file 环境变量
     6、links/depends_on 与其他服务的关联关系
+
+    软件服务的三种模式
+    SaaS(Software as a Service) 以软件作为服务
+    PaaS(Platform as a Service) 以平台作为服务
+    IaaS(Infrastructure as a Service) 以基础设施作为服务
+    三种模式相互配合完成交付，再精准完成需求业务后，交付和维护占据了软件服务领域的大部分时间和金钱。
+    从docker和k8s这种模式来看，golang是一个优秀的开发语言。能够在较短的时间，迅速成长为一个可以
+    用于开发生产环境应用的语言。
