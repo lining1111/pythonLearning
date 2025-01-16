@@ -7,7 +7,7 @@
     从历史的角度看待编程世界：
         第一代语言 二进制bin，计算机直接识别并执行的
         第二代语言 汇编,稍微扩展了可读性
-        第三代语言       shell(1970)
+        第三代语言        shell(1970)
                         c(1972)
                         sql(1974)
                         c++(1979)
@@ -53,7 +53,7 @@
     
     随着系统的功能增加，服务会越来越多，监听的端口也会越来越多，为了系统的稳定性，一般而言会有国际惯例来约定端口资源，
     也会利用容器技术将系统进行软隔离。
-    学习大型的系统，可以分析其态势，了解它们使用的框架信息，比如编程语言、日志系统、通信机制等等。
+    学习大型的系统，可以分析其树形态势，了解它们使用的框架信息，比如编程语言、日志系统、通信机制等等。
 
 ---
 
@@ -120,7 +120,59 @@
     经过Dockerfile和Docker compose后，会在系统中有容器存在，后面就可以对容器进行启动、停止、删除等操作。
     
     类似gitlab对比github一样，harbor对比docker hub来管理docker镜像   https://github.com/goharbor/harbor
-#### Dockerfile
+---
+    docker的官网有很多不同编程语言应该怎么用容器的
+    https://docs.docker.com/guides
+    **其实单独学习命令不如结合例子来看，每个例子都有Dockerfile、compose.yaml,慢慢就懂了。**
+
+#### 1.1、docker 命令行
+    
+    https://docs.docker.com/reference/cli/docker/
+    其实docker命令可用做的很多，下面是常用的
+
+##### 1.1.1、镜像相关的
+    从仓库拉取镜像
+    docker pull xxx:版本号 (如果要特定仓库的，就把xxx前面加上仓库地址)
+    查看本地镜像
+    docker images
+    将一个镜像跑容器
+    docker run 可用加-itd等指令，容器起来后会一直在系统中，可用用容器指令查看
+    删除镜像
+    docker rmi
+
+##### 1.1.2、容器相关的
+    查看本地容器状态
+    docker container ls -a 一定要加-a，不然只会显示在运行的，那些退出的就不显示了，你还以为不存在呢。
+    启动一个已经停止的容器
+    docker start xxx
+    停止一个容器
+    docker stop xxx
+    重启一个容器
+    docker restart xxx
+    进入一个在运行的容器
+    docker exec -it
+    导入导出容器
+    导出容器快照
+    docker export xxx > XXX.tar
+    将快照导入成镜像
+    cat XXX.tar | docker import - xxx:version
+    删除容器
+    docker rm
+    查看容器运行的进程
+    docker top xxx
+    查看容器的详细信息，包括容器使用到的网络、存储信息
+    docker inspect xxx
+
+##### 1.1.3、网络和存储
+    docker network ls       docker port xxx
+    docker network create -d (bridge/host/overlay) nnn 
+    如果容器运行的时候，不指定网络，那么会默认加入docker0这个网络
+
+    docker volume ls
+
+#### 1.2、Dockerfile
+    https://docs.docker.com/reference/dockerfile/
+---
     可以用docker的方式将单一容器内的服务进行组织，编写成一个自己的镜像
     1、用Dockerfile，拉取单个基础镜像如 ubuntu (一般ubuntu的默认apt源是国外的，需要将本地的apt源替换掉镜像的： COPY /etc/apt/sources.list /etc/apt )
     2、将本地的应用程序拷贝到基础镜像内
@@ -136,16 +188,17 @@
     EXPOSE 10001
     VOLUME ["/app/log/"]
     CMD ["executable","param1","param2"]
-#### docker compose
+#### 1.3、docker compose
+    https://docs.docker.com/reference/compose-file/
+---
     docker compose 可以运行多个容器。默认是compose.yml，语法也比较简单，可以参考 https://www.cnblogs.com/minseo/p/11548177.html
-    官方文档地址 https://docs.docker.com/reference/compose-file/
     顶级元素有：
-    name        名字
-    services    服务
-    networks    网络
-    volumes     卷
-    configs     配置
-    secrets     密钥
+    name        名字  https://docs.docker.com/reference/compose-file/version-and-name/
+    services    服务  https://docs.docker.com/reference/compose-file/services/
+    networks    网络  https://docs.docker.com/reference/compose-file/networks/
+    volumes     卷   https://docs.docker.com/reference/compose-file/volumes/
+    configs     配置  https://docs.docker.com/reference/compose-file/configs/
+    secrets     密钥  https://docs.docker.com/reference/compose-file/secrets/
     以下是一个模板
     version: '3'
     services:
