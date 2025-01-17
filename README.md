@@ -1086,6 +1086,11 @@
     安装参考 https://helm.sh/zh/docs/intro/install/
     在 https://github.com/helm/helm/releases/tag/v3.10.0 下载 linux/amd64版本的安装包
     将压缩包解压后，将执行文件拷贝到/usr/local/bin目录下
+    增加helm的自动补全
+    在/etc/bash.bashrc文件添加(和kubectl类似)
+    source <(helm completion bash)
+    保存退出后，执行 source /etc/bash.bashrc
+
     
     添加chart仓库
     helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -1266,3 +1271,11 @@
     三种模式相互配合完成交付，再精准完成需求业务后，交付和维护占据了软件服务领域的大部分时间和金钱。
     从docker和k8s这种模式来看，golang是一个优秀的开发语言。能够在较短的时间，迅速成长为一个可以
     用于开发生产环境应用的语言。
+#### 3.1 ansible
+    ansible是一个可以帮助在多台机器快速执行相同任务的工具
+    https://www.redhat.com/en/ansible-collaborative
+    前置条件:ssh 免密登录远程服务器
+    1、在本地机器生成公钥和私钥
+    ssh-keygen -t rsa
+    2、将生成的公钥拷贝到远程服务器上
+    ssh-copy-id user@remote_host
