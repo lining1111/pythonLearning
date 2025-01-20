@@ -1237,6 +1237,9 @@
     kubectl get svc/ks-console -n kubesphere-system # 默认端口是 30880，如果是云服务商，或开启了防火墙，记得要开放该端口
     
     # 登录控制台访问，账号密码：admin/P@88w0rd
+
+    如果上面的方法太麻烦，可以参考kubesphere官网的安装方法
+    https://www.kubesphere.io/zh/docs/v4.1/02-quickstart/01-install-kubesphere/
     
     注意kubesphere是非常消耗资源的，可以根据下面的网站说明，按自己的硬件配置来进行开启或者关闭
     https://kubesphere.io/zh/docs/v3.3/pluggable-components/overview/
